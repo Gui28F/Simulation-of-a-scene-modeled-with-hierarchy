@@ -1,5 +1,5 @@
 import { buildProgramFromSources, loadShadersFromURLS, setupWebGL } from "../libs/utils.js";
-import { ortho, lookAt, flatten, vec3, scale, rotateZ } from "../libs/MV.js";
+import { ortho, lookAt, flatten, vec3, scale, rotateZ, mult } from "../libs/MV.js";
 import { modelView, loadMatrix, multRotationY, multScale, multRotationX, multRotationZ, pushMatrix, popMatrix, multTranslation } from "../libs/stack.js";
 
 import * as CYLINDER from '../libs/objects/cylinder.js';
@@ -14,19 +14,24 @@ const BLADE_COLOR = vec3(0, 0, 1);
 const ROTOR_COLOR = vec3(1, 1, 0.35);
 const GROUND_COLOR = vec3(0.7, 0.7, 0.7);
 const BUILDING_COLOR = vec3(0.3, 0.3, 0.3);
+const WINDOW_COLOR = vec3(0.7, 0.7, 0);
 /** @type WebGLRenderingContext */
 let gl;
 
 let time = 0;           // Global simulation time in days
-//let speed = 1 / 60.0;     // Speed (how many days added to time on each render pass
 let mode;               // Drawing mode (gl.LINES or gl.TRIANGLES)
 let animation = true;   // Animation is running
-const VP_DISTANCE = 4;
+const VP_DISTANCE = 10;
 let uColor;
 
 //helicopter position
-let heliPosition = [0.0, 0.0, 0.0];
-
+let heli = {
+    position: [0.0, 0.9, 3.0], rotationV: 40,
+    onGround: true, inclinationAngle: 0,
+    maxInclinationAngle: 30, velocity: 0,
+    r: 0
+};
+let boxes = [];
 
 function setup(shaders) {
     let canvas = document.getElementById("gl-canvas");
@@ -38,12 +43,13 @@ function setup(shaders) {
     uColor = gl.getUniformLocation(program, "uColor")
     let mProjection = ortho(-VP_DISTANCE * aspect, VP_DISTANCE * aspect, -VP_DISTANCE, VP_DISTANCE, -3 * VP_DISTANCE, 3 * VP_DISTANCE);
 
-    mode = gl.LINES;
+    mode = gl.TRIANGLES;
 
 
     resize_canvas();
     window.addEventListener("resize", resize_canvas);
     document.onkeydown = function (event) {
+        console.log(event.key)
         switch (event.key) {
             case 'w':
                 mode = gl.LINES;
@@ -51,8 +57,20 @@ function setup(shaders) {
             case 's':
                 mode = gl.TRIANGLES;
                 break;
-            case 'p':
-                animation = !animation;
+            case 'ArrowUp':
+                moveHelicopeterUP();
+                break;
+            case 'ArrowDown':
+                moveHelicopeterDown();
+                break;
+            case 'ArrowLeft':
+                moveHelicopeterFront();
+                break;
+            case 'ArrowRight':
+                moveHelicopeterBack();
+                break;
+            case ' ':
+                dropBox();
                 break;
             /* case '+':
                  if (animation) speed *= 1.1;
@@ -84,6 +102,46 @@ function setup(shaders) {
     function uploadModelView() {
 
         gl.uniformMatrix4fv(gl.getUniformLocation(program, "mModelView"), false, flatten(modelView()));
+    }
+
+    function dropBox() {
+        let x = heli.position[0];
+        let y = heli.position[1];
+        let z = heli.position[2];
+        let box = { time: new Date().getTime(), pos: [x, y, z] , r: clone heli.r};
+        boxes.push(box)
+    }
+    function moveHelicopeterFront() {
+        if (!heli.onGround) {
+            if (heli.velocity + 0.1 <= 2)
+                heli.velocity += 0.1;
+            if (heli.inclinationAngle + 2 <= heli.maxInclinationAngle)
+                heli.inclinationAngle += 2;
+        }
+
+    }
+
+    function moveHelicopeterBack() {
+        if (!heli.onGround) {
+            if (heli.velocity - 0.1 >= -2)
+                heli.velocity -= 0.1;
+            if (heli.inclinationAngle - 2 >= -30)
+                heli.inclinationAngle -= 2;
+        }
+
+    }
+
+    function moveHelicopeterUP() {
+        if (heli.rotationV > 100 && heli.position[1] < 10)
+            heli.position[1] += 0.05;
+        heli.onGround = false;
+    }
+
+    function moveHelicopeterDown() {
+        if (!heli.onGround)
+            heli.position[1] -= 0.05;
+        if (heli.position[1] <= 0.9)
+            heli.onGround = true;
     }
 
     function drawBaseLeft() {
@@ -153,7 +211,7 @@ function setup(shaders) {
         SPHERE.draw(gl, program, mode);
     }
 
-    function drawTailRotor() {
+    function drawTailRotor(r) {
 
         multTranslation([2.65, 0.45, 0]);
         pushMatrix();
@@ -188,7 +246,7 @@ function setup(shaders) {
         CYLINDER.draw(gl, program, mode);
     }
 
-    function drawMainRotor( r) {
+    function drawMainRotor(r) {
         multTranslation([0, 0.7, 0])
         multRotationY(r);
         pushMatrix();
@@ -227,6 +285,12 @@ function setup(shaders) {
 
     function drawHelicopter(x, y, z, r) {
         pushMatrix();
+        //heli.position[0] = -4 * Math.cos(heli.velocity);
+        //heli.position[2] = -4 * Math.sin(heli.velocity);
+        multRotationY(heli.r)
+        multRotationZ(heli.inclinationAngle)
+        multTranslation([x, y, z]);
+        pushMatrix();
         pushMatrix();
         pushMatrix();
         drawBaseLeft();
@@ -243,36 +307,131 @@ function setup(shaders) {
         drawTailRotor(r);
         popMatrix();
         drawMainRotor(r);
+        popMatrix();
+        popMatrix();
     }
 
     function drawGround() {
         multRotationY(45)
-        multScale([8, 0.1, 8]);
+        multScale([15, 0.1, 15]);
         changeColor(GROUND_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
     }
 
+    function drawLeftWindows() {
+        pushMatrix();
+        multTranslation([-0.9, 1, 0.2])
+        multRotationY(45)
+        multScale([0.5, 0.5, 0.5])
+        changeColor(WINDOW_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+        popMatrix();
+        pushMatrix();
+        multTranslation([-0.2, 1, 0.9])
+        multRotationY(45)
+        multScale([0.5, 0.5, 0.5])
+        changeColor(WINDOW_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+        popMatrix();
+        pushMatrix();
+        multTranslation([-0.9, 0.3, 0.2])
+        multRotationY(45)
+        multScale([0.5, 0.5, 0.5])
+        changeColor(WINDOW_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+        popMatrix();
+        pushMatrix();
+        multTranslation([-0.2, 0.3, 0.9])
+        multRotationY(45)
+        multScale([0.5, 0.5, 0.5])
+        changeColor(WINDOW_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+        popMatrix();
+    }
+
+    function drawRightWindows() {
+        pushMatrix();
+        multTranslation([0.9, 1, 0.2])
+        multRotationY(-45)
+        multScale([0.5, 0.5, 0.5])
+        changeColor(WINDOW_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+        popMatrix();
+        pushMatrix();
+        multTranslation([0.2, 1, 0.9])
+        multRotationY(-45)
+        multScale([0.5, 0.5, 0.5])
+        changeColor(WINDOW_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+        popMatrix();
+        pushMatrix();
+        multTranslation([0.9, 0.3, 0.2])
+        multRotationY(-45)
+        multScale([0.5, 0.5, 0.5])
+        changeColor(WINDOW_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+        popMatrix();
+        pushMatrix();
+        multTranslation([0.2, 0.3, 0.9])
+        multRotationY(-45)
+        multScale([0.5, 0.5, 0.5])
+        changeColor(WINDOW_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+        popMatrix();
+    }
+
     function drawBuildType1() {
-        multTranslation([0, 2, 0]);
+        multTranslation([0, 2, -8]);
+        pushMatrix();
         multRotationY(45);
-        multScale([2,4,2])
+        multScale([2, 4, 2])
         changeColor(BUILDING_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
+        popMatrix();
+        drawLeftWindows();
+        drawRightWindows();
+
     }
     function drawCity() {
         pushMatrix();
-            drawGround();
+        drawGround();
         popMatrix();
         pushMatrix();
-            drawBuildType1();
+        drawBuildType1();
         popMatrix();
     }
-    let r = 40;
+
+
+    function renderBoxes() {
+        for (let i = 0; i < boxes.length; i++) {
+            if (boxes[i].pos[1] >= 0)
+                boxes[i].pos[1] -= 0.1;
+            console.log(boxes[i].time)
+            if (new Date().getTime() - boxes[i].time < 5000) {
+                pushMatrix();
+                multRotationY(heli.r)
+                multTranslation(boxes[i].pos);
+
+                changeColor(BUILDING_COLOR);
+                uploadModelView();
+                CUBE.draw(gl, program, mode);
+                popMatrix();
+            }
+            boxes.slice(i, 1);
+        }
+    }
     function render() {
-        //if (animation) time += speed;
-        r += 3;
+
         window.requestAnimationFrame(render);
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -282,9 +441,15 @@ function setup(shaders) {
         gl.uniformMatrix4fv(gl.getUniformLocation(program, "mProjection"), false, flatten(mProjection));
 
         loadMatrix(lookAt([0, VP_DISTANCE, VP_DISTANCE], [0, 0, 0], [0, 1, 0]));
-
-        ///drawCity();
-        drawHelicopter(heliPosition[0], heliPosition[1], heliPosition[2],r);
+        if (heli.onGround) {
+            heli.rotationV /= 1.01;
+        } else {
+            heli.rotationV += 10;
+            heli.r -= heli.velocity;
+        }
+        drawCity();
+        drawHelicopter(heli.position[0], heli.position[1], heli.position[2], heli.rotationV);
+        renderBoxes();
     }
 }
 
