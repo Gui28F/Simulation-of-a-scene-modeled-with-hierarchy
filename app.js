@@ -108,7 +108,7 @@ function setup(shaders) {
         let x = heli.position[0];
         let y = heli.position[1];
         let z = heli.position[2];
-        let box = { time: new Date().getTime(), pos: [x, y, z] , r: clone heli.r};
+        let box = { time: new Date().getTime(), pos: [x, y, z] };
         boxes.push(box)
     }
     function moveHelicopeterFront() {
