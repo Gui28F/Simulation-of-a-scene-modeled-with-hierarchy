@@ -9,7 +9,7 @@ import { rotateX, rotateY } from "./libs/MV.js";
 
 const LANDING_PA_SKIDS_COLOR = vec3(1, 1, 0.35);
 const LANDING_PE_SKIDS_COLOR = vec3(0.5, 0.5, 0.5);
-const CABINE_COLOR = vec3(1, 0, 0); 
+const CABINE_COLOR = vec3(1, 0, 0);
 const BLADE_COLOR = vec3(0, 0, 1);
 const ROTOR_COLOR = vec3(1, 1, 0.35);
 const GROUND_COLOR = vec3(0.7, 0.7, 0.7);
@@ -112,29 +112,29 @@ function setup(shaders) {
     }
 
     function drawBaseRight(x, y, z) {
-            pushMatrix();
-                multTranslation([x + 0, y - 0.83, z - 0.25]);
-                multRotationZ(90);
-                multScale([0.1, 2.0, 0.1]);
-                changeColor(LANDING_PA_SKIDS_COLOR);
-                uploadModelView();
-                CYLINDER.draw(gl, program, mode);
-            popMatrix();
-            pushMatrix();
-                multTranslation([x + 0.7, y - 0.59, z - 0.25]);
-                multRotationZ(20);
-                multScale([0.1, 0.5, 0.05]);
-                changeColor(LANDING_PE_SKIDS_COLOR);
-                uploadModelView();
-                CUBE.draw(gl, program, mode);
-            popMatrix();
-                multTranslation([x - 0.7, y - 0.59, z - 0.25]);
-                multRotationZ(-20);
-                multScale([0.1, 0.5, 0.05]);
-                changeColor(LANDING_PE_SKIDS_COLOR);
-                uploadModelView();
-                CUBE.draw(gl, program, mode);
-        
+        pushMatrix();
+        multTranslation([x + 0, y - 0.83, z - 0.25]);
+        multRotationZ(90);
+        multScale([0.1, 2.0, 0.1]);
+        changeColor(LANDING_PA_SKIDS_COLOR);
+        uploadModelView();
+        CYLINDER.draw(gl, program, mode);
+        popMatrix();
+        pushMatrix();
+        multTranslation([x + 0.7, y - 0.59, z - 0.25]);
+        multRotationZ(20);
+        multScale([0.1, 0.5, 0.05]);
+        changeColor(LANDING_PE_SKIDS_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+        popMatrix();
+        multTranslation([x - 0.7, y - 0.59, z - 0.25]);
+        multRotationZ(-20);
+        multScale([0.1, 0.5, 0.05]);
+        changeColor(LANDING_PE_SKIDS_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+
 
     }
     function drawCockpit(x, y, z) {
@@ -145,103 +145,103 @@ function setup(shaders) {
     }
 
     function drawTailBoom(x, y, z) {
-            multScale([2.2, 0.3, 0.1])
-            multTranslation([x + 0.7, y + 0.7, z + 0]);
-            gl.uniform3fv(uColor, CABINE_COLOR);
-            uploadModelView();
-            SPHERE.draw(gl, program, mode);
+        multScale([2.2, 0.3, 0.1])
+        multTranslation([x + 0.7, y + 0.7, z + 0]);
+        gl.uniform3fv(uColor, CABINE_COLOR);
+        uploadModelView();
+        SPHERE.draw(gl, program, mode);
     }
 
     function drawTailRotor(x, y, z, r) {
 
-            multTranslation([x + 2.65, y + 0.45, z + 0]);
-        pushMatrix();     
-            multRotationZ(-15);
-            multScale([0.25, 0.6, 0.3])
-            gl.uniform3fv(uColor, CABINE_COLOR);
-            uploadModelView();
-            SPHERE.draw(gl, program, mode);
+        multTranslation([x + 2.65, y + 0.45, z + 0]);
+        pushMatrix();
+        multRotationZ(-15);
+        multScale([0.25, 0.6, 0.3])
+        gl.uniform3fv(uColor, CABINE_COLOR);
+        uploadModelView();
+        SPHERE.draw(gl, program, mode);
         popMatrix();
         multTranslation([0, 0, 0.2]);
         multRotationZ(r);
         pushMatrix();
-            multTranslation([-0.3, 0, 0]);
-            multRotationZ(90)
-            multScale([0.1, 0.5, 0.1]);
-            gl.uniform3fv(uColor, BLADE_COLOR);
-            uploadModelView();
-            SPHERE.draw(gl, program, mode);
+        multTranslation([-0.3, 0, 0]);
+        multRotationZ(90)
+        multScale([0.1, 0.5, 0.1]);
+        gl.uniform3fv(uColor, BLADE_COLOR);
+        uploadModelView();
+        SPHERE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            multTranslation([0.3, 0, 0]);
-            multRotationZ(90)
-            multScale([0.1, 0.5, 0.1]);
-            gl.uniform3fv(uColor, BLADE_COLOR);
-            uploadModelView();
-            SPHERE.draw(gl, program, mode);
+        multTranslation([0.3, 0, 0]);
+        multRotationZ(90)
+        multScale([0.1, 0.5, 0.1]);
+        gl.uniform3fv(uColor, BLADE_COLOR);
+        uploadModelView();
+        SPHERE.draw(gl, program, mode);
         popMatrix();
-            multRotationX(90);
-            multScale([0.1, 0.1, 0.1]);
-            gl.uniform3fv(uColor, ROTOR_COLOR);
-            uploadModelView();
-            CYLINDER.draw(gl, program, mode);
+        multRotationX(90);
+        multScale([0.1, 0.1, 0.1]);
+        gl.uniform3fv(uColor, ROTOR_COLOR);
+        uploadModelView();
+        CYLINDER.draw(gl, program, mode);
     }
 
     function drawMainRotor(x, y, z, r) {
         multTranslation([x + 0, y + 0.7, z + 0])
         multRotationY(r);
         pushMatrix();
-            multScale([0.1, 0.4, 0.1]);
-            gl.uniform3fv(uColor, ROTOR_COLOR);
-            uploadModelView();
-            CYLINDER.draw(gl, program, mode);
+        multScale([0.1, 0.4, 0.1]);
+        gl.uniform3fv(uColor, ROTOR_COLOR);
+        uploadModelView();
+        CYLINDER.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            multTranslation([-1, 0.05, 0]);
-            multScale([2, 0.1, 0.3])
-            gl.uniform3fv(uColor, BLADE_COLOR);
-            uploadModelView();
-            SPHERE.draw(gl, program, mode);
+        multTranslation([-1, 0.05, 0]);
+        multScale([2, 0.1, 0.3])
+        gl.uniform3fv(uColor, BLADE_COLOR);
+        uploadModelView();
+        SPHERE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            multTranslation([0.48, 0.05, 0.85]);
-            multRotationY(120);
-            multScale([2, 0.1, 0.3])
-            gl.uniform3fv(uColor, BLADE_COLOR);
-            uploadModelView();
-            SPHERE.draw(gl, program, mode);
+        multTranslation([0.48, 0.05, 0.85]);
+        multRotationY(120);
+        multScale([2, 0.1, 0.3])
+        gl.uniform3fv(uColor, BLADE_COLOR);
+        uploadModelView();
+        SPHERE.draw(gl, program, mode);
         popMatrix();
-            multTranslation([0.48, 0.04, -0.85]);
-            multRotationY(240);
-            multScale([2, 0.1, 0.3])
-            gl.uniform3fv(uColor, BLADE_COLOR);
-            uploadModelView();
-            SPHERE.draw(gl, program, mode);
-        
+        multTranslation([0.48, 0.04, -0.85]);
+        multRotationY(240);
+        multScale([2, 0.1, 0.3])
+        gl.uniform3fv(uColor, BLADE_COLOR);
+        uploadModelView();
+        SPHERE.draw(gl, program, mode);
+
     }
 
     function changeColor(color) {
         gl.uniform3fv(uColor, color);
     }
 
-    function drawHelicopter(x, y, z, r) { 
+    function drawHelicopter(x, y, z, r) {
         pushMatrix();
-            pushMatrix();
-                pushMatrix();
-                    drawBaseLeft(x, y, z);
-                popMatrix();    
-                    drawBaseRight(x, y, z);
-            popMatrix();
-            pushMatrix();
-                pushMatrix();
-                    drawCockpit(x, y, z);
-                popMatrix();
-                pushMatrix();    
-                    drawTailBoom(x, y, z);
-                popMatrix();
-                    drawTailRotor(x, y, z, r);
-                popMatrix(); 
-            drawMainRotor(x, y, z,r);
+        pushMatrix();
+        pushMatrix();
+        drawBaseLeft(x, y, z);
+        popMatrix();
+        drawBaseRight(x, y, z);
+        popMatrix();
+        pushMatrix();
+        pushMatrix();
+        drawCockpit(x, y, z);
+        popMatrix();
+        pushMatrix();
+        drawTailBoom(x, y, z);
+        popMatrix();
+        drawTailRotor(x, y, z, r);
+        popMatrix();
+        drawMainRotor(x, y, z, r);
     }
 
     function drawGround() {
@@ -254,7 +254,7 @@ function setup(shaders) {
 
     function drawCity() {
         pushMatrix();
-            drawGround();   
+        drawGround();
         popMatrix();
     }
     let r = 40;
