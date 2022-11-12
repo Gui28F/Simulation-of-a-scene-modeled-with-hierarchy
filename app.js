@@ -13,6 +13,7 @@ const CABINE_COLOR = vec3(1, 0, 0);
 const BLADE_COLOR = vec3(0, 0, 1);
 const ROTOR_COLOR = vec3(1, 1, 0.35);
 const GROUND_COLOR = vec3(0.7, 0.7, 0.7);
+const BUILDING_COLOR = vec3(0.3, 0.3, 0.3);
 /** @type WebGLRenderingContext */
 let gl;
 
@@ -85,9 +86,9 @@ function setup(shaders) {
         gl.uniformMatrix4fv(gl.getUniformLocation(program, "mModelView"), false, flatten(modelView()));
     }
 
-    function drawBaseLeft(x, y, z) {
+    function drawBaseLeft() {
         pushMatrix();
-        multTranslation([x + 0, y - 0.83, z + 0.25]);
+        multTranslation([0, - 0.83, 0.25]);
         multRotationZ(90);
         multScale([0.1, 2.0, 0.1]);
         changeColor(LANDING_PA_SKIDS_COLOR);
@@ -95,14 +96,14 @@ function setup(shaders) {
         CYLINDER.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        multTranslation([x + 0.7, y - 0.59, z + 0.25]);
+        multTranslation([0.7, - 0.59, 0.25]);
         multRotationZ(20);
         multScale([0.1, 0.5, 0.05]);
         changeColor(LANDING_PE_SKIDS_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
-        multTranslation([x - 0.7, y - 0.59, z + 0.25]);
+        multTranslation([-0.7, -0.59, 0.25]);
         multRotationZ(-20);
         multScale([0.1, 0.5, 0.05]);
         changeColor(LANDING_PE_SKIDS_COLOR);
@@ -111,9 +112,9 @@ function setup(shaders) {
 
     }
 
-    function drawBaseRight(x, y, z) {
+    function drawBaseRight() {
         pushMatrix();
-        multTranslation([x + 0, y - 0.83, z - 0.25]);
+        multTranslation([0, -0.83, -0.25]);
         multRotationZ(90);
         multScale([0.1, 2.0, 0.1]);
         changeColor(LANDING_PA_SKIDS_COLOR);
@@ -121,14 +122,14 @@ function setup(shaders) {
         CYLINDER.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        multTranslation([x + 0.7, y - 0.59, z - 0.25]);
+        multTranslation([0.7, - 0.59, - 0.25]);
         multRotationZ(20);
         multScale([0.1, 0.5, 0.05]);
         changeColor(LANDING_PE_SKIDS_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
-        multTranslation([x - 0.7, y - 0.59, z - 0.25]);
+        multTranslation([- 0.7, - 0.59, - 0.25]);
         multRotationZ(-20);
         multScale([0.1, 0.5, 0.05]);
         changeColor(LANDING_PE_SKIDS_COLOR);
@@ -137,24 +138,24 @@ function setup(shaders) {
 
 
     }
-    function drawCockpit(x, y, z) {
+    function drawCockpit() {
         multScale([2, 1, 1.3])
         changeColor(CABINE_COLOR);
         uploadModelView();
         SPHERE.draw(gl, program, mode);
     }
 
-    function drawTailBoom(x, y, z) {
+    function drawTailBoom() {
         multScale([2.2, 0.3, 0.1])
-        multTranslation([x + 0.7, y + 0.7, z + 0]);
+        multTranslation([0.7, 0.7, 0]);
         gl.uniform3fv(uColor, CABINE_COLOR);
         uploadModelView();
         SPHERE.draw(gl, program, mode);
     }
 
-    function drawTailRotor(x, y, z, r) {
+    function drawTailRotor() {
 
-        multTranslation([x + 2.65, y + 0.45, z + 0]);
+        multTranslation([2.65, 0.45, 0]);
         pushMatrix();
         multRotationZ(-15);
         multScale([0.25, 0.6, 0.3])
@@ -187,8 +188,8 @@ function setup(shaders) {
         CYLINDER.draw(gl, program, mode);
     }
 
-    function drawMainRotor(x, y, z, r) {
-        multTranslation([x + 0, y + 0.7, z + 0])
+    function drawMainRotor( r) {
+        multTranslation([0, 0.7, 0])
         multRotationY(r);
         pushMatrix();
         multScale([0.1, 0.4, 0.1]);
@@ -228,33 +229,44 @@ function setup(shaders) {
         pushMatrix();
         pushMatrix();
         pushMatrix();
-        drawBaseLeft(x, y, z);
+        drawBaseLeft();
         popMatrix();
-        drawBaseRight(x, y, z);
-        popMatrix();
-        pushMatrix();
-        pushMatrix();
-        drawCockpit(x, y, z);
+        drawBaseRight();
         popMatrix();
         pushMatrix();
-        drawTailBoom(x, y, z);
+        pushMatrix();
+        drawCockpit();
         popMatrix();
-        drawTailRotor(x, y, z, r);
+        pushMatrix();
+        drawTailBoom();
         popMatrix();
-        drawMainRotor(x, y, z, r);
+        drawTailRotor(r);
+        popMatrix();
+        drawMainRotor(r);
     }
 
     function drawGround() {
         multRotationY(45)
         multScale([8, 0.1, 8]);
-        changeColor(LANDING_PE_SKIDS_COLOR);
+        changeColor(GROUND_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
     }
 
+    function drawBuildType1() {
+        multTranslation([0, 2, 0]);
+        multRotationY(45);
+        multScale([2,4,2])
+        changeColor(BUILDING_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+    }
     function drawCity() {
         pushMatrix();
-        drawGround();
+            drawGround();
+        popMatrix();
+        pushMatrix();
+            drawBuildType1();
         popMatrix();
     }
     let r = 40;
@@ -271,7 +283,7 @@ function setup(shaders) {
 
         loadMatrix(lookAt([0, VP_DISTANCE, VP_DISTANCE], [0, 0, 0], [0, 1, 0]));
 
-        //drawCity();
+        ///drawCity();
         drawHelicopter(heliPosition[0], heliPosition[1], heliPosition[2],r);
     }
 }
