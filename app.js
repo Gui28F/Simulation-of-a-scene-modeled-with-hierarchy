@@ -1,12 +1,11 @@
 import { buildProgramFromSources, loadShadersFromURLS, setupWebGL } from "../libs/utils.js";
-import { ortho, lookAt, flatten, vec3, scale, rotateZ, mult } from "../libs/MV.js";
+import { ortho, lookAt, flatten, vec3, scale, rotateZ, mult, rotateY } from "../libs/MV.js";
 import { modelView, loadMatrix, multRotationY, multScale, multRotationX, multRotationZ, pushMatrix, popMatrix, multTranslation } from "../libs/stack.js";
-
 import * as CYLINDER from '../libs/objects/cylinder.js';
 import * as SPHERE from '../libs/objects/sphere.js';
 import * as CUBE from '../libs/objects/cube.js';
 import * as CONE from '../libs/objects/cone.js';
-import { rotateX, rotateY } from "./libs/MV.js";
+
 
 const LANDING_PA_SKIDS_COLOR = vec3(1, 1, 0.35);
 const LANDING_PE_SKIDS_COLOR = vec3(0.5, 0.5, 0.5);
@@ -35,7 +34,10 @@ let mode;               // Drawing mode (gl.LINES or gl.TRIANGLES)
 let animation = true;   // Animation is running
 const VP_DISTANCE = 20;
 let uColor;
-
+/*let inputs = [...document.getElementsByTagName('input')];
+inputs.forEach(i => {
+    i.max = VP_DISTANCE;
+})*/
 //helicopter position
 let heli = {
     position: [0.0, 0.9, 7.0], rotationV: 0,
@@ -119,7 +121,7 @@ function setup(shaders) {
     }
 
     function dropBox() {
-        let box = { time: new Date().getTime(), pos: structuredClone([heli.position[0], heli.position[1]-0.9, heli.position[2]]), r: JSON.parse(JSON.stringify(heli.r)) };
+        let box = { time: new Date().getTime(), pos: structuredClone([heli.position[0], heli.position[1] - 0.9, heli.position[2]]), r: JSON.parse(JSON.stringify(heli.r)) };
         boxes.push(box)
     }
     function moveHelicopeterFront() {
@@ -411,12 +413,12 @@ function setup(shaders) {
 
     function drawDor() {
         pushMatrix();
-           multRotationY(45);
-            multTranslation([-1.6,-4,-0.1])
-            multScale([1, 1.6 , 1.5])
-            changeColor(HOSPITAL_DOOR_COLOR);
-            uploadModelView();
-            CUBE.draw(gl, program, mode);
+        multRotationY(45);
+        multTranslation([-1.6, -4, -0.1])
+        multScale([1, 1.6, 1.5])
+        changeColor(HOSPITAL_DOOR_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
         popMatrix();
     }
     function drawBuildType1() {
@@ -440,7 +442,7 @@ function setup(shaders) {
 
     function drawBridgeWindow(x, y, z) {
         pushMatrix()
-        multTranslation([x,y,z])
+        multTranslation([x, y, z])
         multRotationY(45)
         multScale([4.1, 1, 1])
         changeColor(WINDOW_COLOR);
@@ -491,12 +493,12 @@ function setup(shaders) {
         drawBridgeWindow(10.7, 4.9, -3.2);
         popMatrix()
         drawBridgeWindow(8.9, 4.9, -4.9);
-       
+
     }
 
     function drawHospital() {
         pushMatrix();
-        multTranslation([1,0,0])
+        multTranslation([1, 0, 0])
         pushMatrix();
         multTranslation([0, 4, -6])
         drawBuildType1();
@@ -583,33 +585,33 @@ function setup(shaders) {
 
     function drawRoad() {
         pushMatrix();
-        multTranslation([-5,0,-8])
+        multTranslation([-5, 0, -8])
         multRotationY(-45)
-        multScale([2, 0.1, 13.3])        
+        multScale([2, 0.1, 13.3])
         changeColor(ROAD_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        multTranslation([-4,0,1])
+        multTranslation([-4, 0, 1])
         multRotationY(45)
-        multScale([2, 0.1, 13])        
+        multScale([2, 0.1, 13])
         changeColor(ROAD_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        multTranslation([-4,0,1])
+        multTranslation([-4, 0, 1])
         multRotationY(45)
-        multScale([0.2, 0.101, 14.2])        
+        multScale([0.2, 0.101, 14.2])
         changeColor(ROAD_LINES_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        multTranslation([-4.8,0,-8.2])
+        multTranslation([-4.8, 0, -8.2])
         multRotationY(-45)
-        multScale([0.2, 0.101, 12])        
+        multScale([0.2, 0.101, 12])
         changeColor(ROAD_LINES_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
@@ -640,7 +642,7 @@ function setup(shaders) {
         for (let i = 0; i < 11; i++) {
             let x = heliportPos[0] + 9 * Math.cos(theta);
             let z = heliportPos[2] + 9 * Math.sin(theta);
-            if(theta != 180)
+            if (theta != 180)
                 putTreeType1(x, z);
             theta += 30;
         }
@@ -676,7 +678,7 @@ function setup(shaders) {
 
         gl.uniformMatrix4fv(gl.getUniformLocation(program, "mProjection"), false, flatten(mProjection));
 
-        loadMatrix(lookAt([0, VP_DISTANCE , VP_DISTANCE], [0, 0, 0], [0, 1, 0]));
+
         //loadMatrix(lookAt([-20, VP_DISTANCE/2, VP_DISTANCE], [0, 0, 0], [0, 1, 0]));
 
         if (heli.onGround) {
@@ -692,6 +694,27 @@ function setup(shaders) {
 
 
     }
+
+    let x = document.getElementById('x');
+    x.addEventListener('input', function () {
+        let camX = VP_DISTANCE * Math.sin(x.value * 2 * Math.PI / 360)
+            * Math.cos(y.value * 2 * Math.PI / 360);
+        let camY = VP_DISTANCE * Math.sin(y.value * 2 * Math.PI / 360);
+        let camZ = VP_DISTANCE * Math.cos(x.value * 2 * Math.PI / 360)
+            * Math.cos(y.value * 2 * Math.PI / 360);
+        console.log(y.value)
+        loadMatrix(lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]));
+    })
+    let y = document.getElementById('y');
+    y.addEventListener('input', function () {
+        let camX = VP_DISTANCE * Math.sin(x.value * 2 * Math.PI / 360)
+            * Math.cos(y.value * 2 * Math.PI / 360);
+        let camY = VP_DISTANCE * Math.sin(y.value * 2 * Math.PI / 360);
+        let camZ = VP_DISTANCE * Math.cos(x.value * 2 * Math.PI / 360)
+            * Math.cos(y.value * 2 * Math.PI / 360);
+        loadMatrix(lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]));
+    })
+
 }
 
 const urls = ["shader.vert", "shader.frag"];
