@@ -12,7 +12,7 @@ const LANDING_PE_SKIDS_COLOR = vec3(0.5, 0.5, 0.5);
 const CABINE_COLOR = vec3(1, 0, 0);
 const BLADE_COLOR = vec3(0, 0, 1);
 const ROTOR_COLOR = vec3(1, 1, 0.35);
-const GROUND_COLOR = vec3(0.7, 0.7, 0.7);
+const GROUND_COLOR = vec3(0, 0.5, 0);
 const BUILDING_COLOR = vec3(0.3, 0.3, 0.3);
 const WINDOW_COLOR = vec3(0.7, 0.7, 0);
 const BOX_COLOR = vec3(0.6, 0.37, 0.18);
@@ -29,9 +29,7 @@ const HOSPITAL_DOOR_COLOR = vec3(0, 0, 0.5);
 /** @type WebGLRenderingContext */
 let gl;
 
-let time = 0;           // Global simulation time in days
 let mode;               // Drawing mode (gl.LINES or gl.TRIANGLES)
-let animation = true;   // Animation is running
 const VP_DISTANCE = 20;
 let uColor;
 /*let inputs = [...document.getElementsByTagName('input')];
@@ -376,7 +374,7 @@ function setup(shaders) {
         pushMatrix()
         multTranslation([0, h, 0])
         pushMatrix();
-        multTranslation([0.6, 2, -0.6])
+        multTranslation([0.7, 2, -0.7])
         multRotationY(-45)
         multScale([4.1, 1, 1])
         changeColor(WINDOW_COLOR);
@@ -384,7 +382,7 @@ function setup(shaders) {
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        multTranslation([-0.8, 2, 0.8])
+        multTranslation([-0.7, 2, 0.7])
         multRotationY(-45)
         multScale([4.1, 1, 1])
         changeColor(WINDOW_COLOR);
@@ -392,7 +390,7 @@ function setup(shaders) {
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        multTranslation([0.6, 0.5, -0.6])
+        multTranslation([0.7, 0.5, -0.7])
         //multTranslation([1.5, 0.5, 0.7])
         multRotationY(-45)
         multScale([4.1, 1, 1])
@@ -401,7 +399,7 @@ function setup(shaders) {
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        multTranslation([-0.8, 0.5, 0.8])
+        multTranslation([-0.7, 0.5, 0.7])
         multRotationY(-45)
         multScale([4.1, 1, 1])
         changeColor(WINDOW_COLOR);
@@ -414,7 +412,7 @@ function setup(shaders) {
     function drawDor() {
         pushMatrix();
         multRotationY(45);
-        multTranslation([-1.6, -4, -0.1])
+        multTranslation([-1.6, -4.6, -0.1])
         multScale([1, 1.6, 1.5])
         changeColor(HOSPITAL_DOOR_COLOR);
         uploadModelView();
@@ -422,7 +420,7 @@ function setup(shaders) {
         popMatrix();
     }
     function drawBuildType1() {
-        multTranslation([0, 1, -8]);
+        multTranslation([0, 1.5, -8]);
         pushMatrix();
         multRotationY(45);
         multScale([4, 11, 4])
@@ -451,10 +449,12 @@ function setup(shaders) {
         popMatrix()
     }
     function drawHospitalBridge() {
+        pushMatrix()
+        multTranslation([0,0.5,0])
         pushMatrix();
         multTranslation([7.7, 4.8, -6.2])
         multRotationY(-45)
-        multScale([18, 2.5, 3.85])
+        multScale([18, 2.6, 3.85])
         changeColor(BUILDING_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
@@ -493,6 +493,7 @@ function setup(shaders) {
         drawBridgeWindow(10.7, 4.9, -3.2);
         popMatrix()
         drawBridgeWindow(8.9, 4.9, -4.9);
+        popMatrix();
 
     }
 
@@ -702,16 +703,27 @@ function setup(shaders) {
         let camY = VP_DISTANCE * Math.sin(y.value * 2 * Math.PI / 360);
         let camZ = VP_DISTANCE * Math.cos(x.value * 2 * Math.PI / 360)
             * Math.cos(y.value * 2 * Math.PI / 360);
-        console.log(y.value)
+        //console.log(y.value)
         loadMatrix(lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]));
     })
     let y = document.getElementById('y');
     y.addEventListener('input', function () {
-        let camX = VP_DISTANCE * Math.sin(x.value * 2 * Math.PI / 360)
+        let camX, camY, camZ;
+        camX = VP_DISTANCE * Math.sin(x.value * 2 * Math.PI / 360)
             * Math.cos(y.value * 2 * Math.PI / 360);
-        let camY = VP_DISTANCE * Math.sin(y.value * 2 * Math.PI / 360);
-        let camZ = VP_DISTANCE * Math.cos(x.value * 2 * Math.PI / 360)
+        camY = VP_DISTANCE * Math.sin(y.value * 2 * Math.PI / 360);
+        camZ = VP_DISTANCE * Math.cos(x.value * 2 * Math.PI / 360)
             * Math.cos(y.value * 2 * Math.PI / 360);
+        console.log(y.value)
+        /*if (y.value >= 90 && y.value <= 180) {
+            camZ *= -1
+            camX *= -1
+            console.log(camY)
+        } else if (y.value > 180 && y.value < 240) {
+            camX *= -1
+           
+        }*/
+
         loadMatrix(lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]));
     })
 
