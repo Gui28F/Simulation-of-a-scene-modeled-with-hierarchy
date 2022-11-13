@@ -30,7 +30,7 @@ const HOSPITAL_DOOR_COLOR = vec3(0, 0, 0.5);
 let gl;
 
 let mode;               // Drawing mode (gl.LINES or gl.TRIANGLES)
-const VP_DISTANCE = 20;
+const VP_DISTANCE = 27;
 let uColor;
 /*let inputs = [...document.getElementsByTagName('input')];
 inputs.forEach(i => {
@@ -38,13 +38,17 @@ inputs.forEach(i => {
 })*/
 //helicopter position
 let heli = {
-    position: [0.0, 0.9, 7.0], rotationV: 0,
+    position: [-6, 0.9, 6.0], rotationV: 0,
     onGround: true, inclinationAngle: 0,
     maxInclinationAngle: 30, velocity: 0,
     r: 0
 };
+
 let heliportPos = structuredClone([heli.position[0], 0, heli.position[2]]);
 let boxes = [];
+
+let x = document.getElementById('x');
+let y = document.getElementById('y');
 
 function setup(shaders) {
     let canvas = document.getElementById("gl-canvas");
@@ -55,9 +59,8 @@ function setup(shaders) {
     let program = buildProgramFromSources(gl, shaders["shader.vert"], shaders["shader.frag"]);
     uColor = gl.getUniformLocation(program, "uColor")
     let mProjection = ortho(-VP_DISTANCE * aspect, VP_DISTANCE * aspect, -VP_DISTANCE, VP_DISTANCE, -3 * VP_DISTANCE, 3 * VP_DISTANCE);
-
+    loadMatrix(lookAt([0, VP_DISTANCE, VP_DISTANCE], [0, 0, 0], [0, 1, 0]));
     mode = gl.TRIANGLES;
-
 
     resize_canvas();
     window.addEventListener("resize", resize_canvas);
@@ -85,6 +88,18 @@ function setup(shaders) {
             case ' ':
                 dropBox();
                 break;
+            case '1':
+                enableSliders();
+                break;
+            case '2':
+                setFrontView();
+                break;
+            case '3':
+                setUpView();
+                break;
+            case '4':
+                setRightView();
+                break;
             /* case '+':
                  if (animation) speed *= 1.1;
                  break;
@@ -102,6 +117,43 @@ function setup(shaders) {
 
     window.requestAnimationFrame(render);
 
+    function setFrontView() {
+        disableSliders();
+        let camX = VP_DISTANCE * Math.sin(0)
+            * Math.cos(0);
+        let camY = VP_DISTANCE * Math.sin(0);
+        let camZ = VP_DISTANCE * Math.cos(0)
+            * Math.cos(0);
+        loadMatrix(lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]));
+    }
+
+    function setUpView() {
+        disableSliders();
+        let camX = VP_DISTANCE * Math.sin(0)
+            * Math.cos(90 * 2 * Math.PI / 360);
+        let camY = VP_DISTANCE * Math.sin(90 * 2 * Math.PI / 360);
+        let camZ = VP_DISTANCE * Math.cos(0)
+            * Math.cos(90 * 2 * Math.PI / 360);
+        loadMatrix(lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]));
+    }
+
+    function setRightView() {
+        disableSliders();
+        let camX = VP_DISTANCE * Math.sin(90 * 2 * Math.PI / 360)
+            * Math.cos(0 * 2 * Math.PI / 360);
+        let camY = VP_DISTANCE * Math.sin(0 * 2 * Math.PI / 360);
+        let camZ = VP_DISTANCE * Math.cos(90 * 2 * Math.PI / 360)
+            * Math.cos(0 * 2 * Math.PI / 360);
+        loadMatrix(lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]));
+    }
+    function disableSliders() {
+        document.getElementById("x-div").style.display = "none";
+        document.getElementById("y-div").style.display = "none";
+    }
+    function enableSliders() {
+        document.getElementById("x-div").style.display = "block";
+        document.getElementById("y-div").style.display = "block";
+    }
 
     function resize_canvas(event) {
         canvas.width = window.innerWidth;
@@ -119,37 +171,38 @@ function setup(shaders) {
     }
 
     function dropBox() {
-        let box = { time: new Date().getTime(), pos: structuredClone([heli.position[0], heli.position[1] - 0.9, heli.position[2]]), r: JSON.parse(JSON.stringify(heli.r)) };
+        let box = { time: new Date().getTime(), pos: structuredClone([heli.position[0] - heli.velocity * 3, heli.position[1] - 0.9, heli.position[2]]), r: JSON.parse(JSON.stringify(heli.r)) };
         boxes.push(box)
     }
     function moveHelicopeterFront() {
         if (!heli.onGround) {
-            if (heli.velocity + 0.1 <= 1)
-                heli.velocity += 0.1;
-            if (heli.inclinationAngle + 3 <= heli.maxInclinationAngle)
-                heli.inclinationAngle += 3;
+            if (heli.velocity + 0.05 <= 1)
+                heli.velocity += 0.05;
+            if (heli.inclinationAngle + 1.5 <= heli.maxInclinationAngle)
+                heli.inclinationAngle += 1.5;
         }
 
     }
 
     function moveHelicopeterBack() {
         if (!heli.onGround) {
-            if (heli.velocity - 0.1 >= -1)
-                heli.velocity -= 0.1;
-            if (heli.inclinationAngle - 3 >= -30)
-                heli.inclinationAngle -= 3;
+            if (heli.velocity - 0.05 >= -1)
+                heli.velocity -= 0.05;
+            if (heli.inclinationAngle - 1.5 >= -30)
+                heli.inclinationAngle -= 1.5;
         }
 
     }
 
     function moveHelicopeterUP() {
-        if (heli.rotationV > 100 && heli.position[1] < 15)
+        if (heli.rotationV > 100 && heli.position[1] < 25)
             heli.position[1] += 0.05;
         heli.onGround = false;
     }
 
     function moveHelicopeterDown() {
-        if (0 <= heli.inclinationAngle && heli.inclinationAngle <= 1) {
+       // console.log(heli.inclinationAngle)
+        if (0 <= heli.inclinationAngle && heli.inclinationAngle <= 1.5) {
             if (!heli.onGround)
                 heli.position[1] -= 0.05;
             if (heli.position[1] <= 0.9)
@@ -301,8 +354,8 @@ function setup(shaders) {
         //heli.position[0] = -4 * Math.cos(heli.velocity);
         //heli.position[2] = -4 * Math.sin(heli.velocity);
         multRotationY(heli.r)
-        multRotationZ(heli.inclinationAngle)
         multTranslation([x, y, z]);
+        multRotationZ(heli.inclinationAngle)
         pushMatrix();
         pushMatrix();
         pushMatrix();
@@ -325,8 +378,9 @@ function setup(shaders) {
     }
 
     function drawGround() {
-        multRotationY(45)
-        multScale([30, 0., 30]);
+        // multRotationY(45)
+        multTranslation([0,-0.5,0])
+        multScale([30, 1, 30]);
         changeColor(GROUND_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
@@ -336,33 +390,62 @@ function setup(shaders) {
         pushMatrix()
         multTranslation([0, h, 0])
         pushMatrix();
-        multTranslation([0.6, 2, 0.6])
-        multRotationY(45)
+        multTranslation([0, 2, 1])
+        // multRotationY(45)
         multScale([4.1, 1, 1])
         changeColor(WINDOW_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        multTranslation([-0.8, 2, -0.8])
-        multRotationY(45)
+        multTranslation([-0, 2, -1])
+        // multRotationY(45)
         multScale([4.1, 1, 1])
         changeColor(WINDOW_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        multTranslation([0.6, 0.5, 0.6])
-        multRotationY(45)
+        multTranslation([0, 0.5, 1])
+        //multRotationY(45)
         multScale([4.1, 1, 1])
         changeColor(WINDOW_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        multTranslation([-0.8, 0.5, -0.8])
-        multRotationY(45)
+        multTranslation([0, 0.5, -1])
+        //multRotationY(45)
         multScale([4.1, 1, 1])
+        changeColor(WINDOW_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+        popMatrix();
+        popMatrix();
+    }
+    function drawLeftWindowsOneSide(h) {
+        pushMatrix()
+        multTranslation([0, h, 0])
+        pushMatrix();
+        multTranslation([1.6, 2, 1])
+        changeColor(WINDOW_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+        popMatrix();
+        pushMatrix();
+        multTranslation([1.6, 2, -1])
+        changeColor(WINDOW_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+        popMatrix();
+        pushMatrix();
+        multTranslation([1.6, 0.5, 1])
+        changeColor(WINDOW_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+        popMatrix();
+        pushMatrix();
+        multTranslation([1.6, 0.5, -1])
         changeColor(WINDOW_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
@@ -374,34 +457,34 @@ function setup(shaders) {
         pushMatrix()
         multTranslation([0, h, 0])
         pushMatrix();
-        multTranslation([0.7, 2, -0.7])
-        multRotationY(-45)
-        multScale([4.1, 1, 1])
+        multTranslation([0.7, 2, 0])
+        // multRotationY(90)
+        multScale([1, 1, 4.1])
         changeColor(WINDOW_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        multTranslation([-0.7, 2, 0.7])
-        multRotationY(-45)
-        multScale([4.1, 1, 1])
+        multTranslation([-0.7, 2, 0])
+        //multRotationY(-45)
+        multScale([1, 1, 4.1])
         changeColor(WINDOW_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        multTranslation([0.7, 0.5, -0.7])
+        multTranslation([-0.7, 0.5, 0])
         //multTranslation([1.5, 0.5, 0.7])
-        multRotationY(-45)
-        multScale([4.1, 1, 1])
+        // multRotationY(-45)
+        multScale([1, 1, 4.1])
         changeColor(WINDOW_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        multTranslation([-0.7, 0.5, 0.7])
-        multRotationY(-45)
-        multScale([4.1, 1, 1])
+        multTranslation([0.7, 0.5, 0])
+        //multRotationY(-45)
+        multScale([1, 1, 4.1])
         changeColor(WINDOW_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
@@ -411,101 +494,109 @@ function setup(shaders) {
 
     function drawDor() {
         pushMatrix();
-        multRotationY(45);
-        multTranslation([-1.6, -4.6, -0.1])
-        multScale([1, 1.6, 1.5])
+        //multRotationY(45);
+        multTranslation([-1.6, -3, -0.1])
+        multScale([1, 2, 1.5])
         changeColor(HOSPITAL_DOOR_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
     }
+
     function drawBuildType1() {
-        multTranslation([0, 1.5, -8]);
+        //multTranslation([0, 1.5, -8]);
         pushMatrix();
-        multRotationY(45);
+        multTranslation([0, 1.5, 0])
+        //multRotationY(45);
         multScale([4, 11, 4])
         changeColor(BUILDING_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
         drawDor();
-        drawLeftWindows(1.5);
-        drawRightWindows(1.5);
-        drawLeftWindows(-1.5);
-        drawRightWindows(-1.5);
-        drawLeftWindows(-3);
+        drawLeftWindows(3);
+        drawRightWindows(3);
+        drawLeftWindows(0);
+        drawRightWindows(0);
         drawRightWindows(-3);
+        drawLeftWindowsOneSide(-3);
 
     }
 
     function drawBridgeWindow(x, y, z) {
         pushMatrix()
         multTranslation([x, y, z])
-        multRotationY(45)
-        multScale([4.1, 1, 1])
+        //multRotationY(45)
+        multScale([4.05, 1, 1])
         changeColor(WINDOW_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix()
     }
     function drawHospitalBridge() {
-        pushMatrix()
-        multTranslation([0,0.5,0])
+        //pushMatrix()
+        //multTranslation([0, 0.5, 0])
         pushMatrix();
-        multTranslation([7.7, 4.8, -6.2])
-        multRotationY(-45)
+        multTranslation([10, 5.3, 0])
+        multRotationY(90)
         multScale([18, 2.6, 3.85])
         changeColor(BUILDING_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        multTranslation([4.2, 4.9, -7.3])
-        multRotationY(45)
+        multTranslation([8.3, 5.4, -1.2])
+        //multRotationY(45)
         multScale([0.5, 2.2, 0.5])
         changeColor(H_HOSPITAL_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        multTranslation([6.4, 4.9, -5.1])
-        multRotationY(45)
+        multTranslation([8.3, 5.4, 1.2])
+        //multRotationY(45)
         multScale([0.5, 2.2, 0.5])
         changeColor(H_HOSPITAL_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        multTranslation([5.4, 4.9, -6.1])
-        multRotationY(45)
-        multScale([0.5, 0.5, 3])
+        multTranslation([8.3, 5.4, -0])
+        //multRotationY(45)
+        multScale([0.5, 0.5, 2])
         changeColor(H_HOSPITAL_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        drawBridgeWindow(4.1, 4.9, -9.7);
+        drawBridgeWindow(10, 5.4, -2.7);
         popMatrix()
         pushMatrix();
-        drawBridgeWindow(2.2, 4.9, -11.6);
+        drawBridgeWindow(10, 5.4, -4.7);
         popMatrix()
         pushMatrix();
-        drawBridgeWindow(10.7, 4.9, -3.2);
-        popMatrix()
-        drawBridgeWindow(8.9, 4.9, -4.9);
+        drawBridgeWindow(10, 5.4, -6.7);
         popMatrix();
+        pushMatrix();
+        drawBridgeWindow(10, 5.4, 2.7);
+        popMatrix();
+        pushMatrix();
+        drawBridgeWindow(10, 5.4, 4.7);
+        popMatrix();
+        drawBridgeWindow(10, 5.4, 6.7);
+        //popMatrix();
 
     }
 
     function drawHospital() {
         pushMatrix();
-        multTranslation([1, 0, 0])
+        multTranslation([2, 0, -0.3])
         pushMatrix();
-        multTranslation([0, 4, -6])
+        multTranslation([10, 4, -10])
         drawBuildType1();
         popMatrix();
         pushMatrix();
-        multTranslation([13, 4, 7])
+        multTranslation([10, 4, 10])
         drawBuildType1();
         popMatrix();
         pushMatrix();
@@ -517,7 +608,7 @@ function setup(shaders) {
     function drawHeliport() {
         multTranslation(heliportPos)
         pushMatrix();
-        multScale([4, 0.11, 4])
+        multScale([4, 0.15, 4])
         changeColor(HELIPORT_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
@@ -525,7 +616,7 @@ function setup(shaders) {
         pushMatrix();
         multTranslation([0.1, 0, 1])
         multRotationY(90)
-        multScale([0.2, 0.111, 3])
+        multScale([0.2, 0.151, 3])
         changeColor(H_HELIPORT_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
@@ -533,7 +624,7 @@ function setup(shaders) {
         pushMatrix();
         multTranslation([0.1, 0, -1])
         multRotationY(90)
-        multScale([0.2, 0.111, 3])
+        multScale([0.2, 0.151, 3])
         changeColor(H_HELIPORT_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
@@ -541,7 +632,7 @@ function setup(shaders) {
         pushMatrix();
         multTranslation([0.1, 0, -0.1])
         multRotationY(0)
-        multScale([0.2, 0.111, 2])
+        multScale([0.2, 0.151, 2])
         changeColor(H_HELIPORT_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
@@ -586,41 +677,40 @@ function setup(shaders) {
 
     function drawRoad() {
         pushMatrix();
-        multTranslation([-5, 0, -8])
-        multRotationY(-45)
-        multScale([2, 0.1, 13.3])
+        multTranslation([2, 0.01, -10.4])
+        multScale([16, 0.1, 2])
         changeColor(ROAD_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        multTranslation([-4, 0, 1])
-        multRotationY(45)
-        multScale([2, 0.1, 13])
+        multTranslation([-6, 0.01, -3.6])
+        multScale([2, 0.1, 15.5])
         changeColor(ROAD_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        multTranslation([-4, 0, 1])
-        multRotationY(45)
-        multScale([0.2, 0.101, 14.2])
+        multTranslation([2, 0.01, -10.4])
+        multScale([16, 0.101, 0.2])
         changeColor(ROAD_LINES_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        multTranslation([-4.8, 0, -8.2])
-        multRotationY(-45)
-        multScale([0.2, 0.101, 12])
+        multTranslation([-6, 0.01, -3.3])
+        multScale([0.2, 0.101, 14.4])
         changeColor(ROAD_LINES_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
+
 
     }
 
     function drawCity() {
+        pushMatrix()
+        multRotationY(60)
         pushMatrix();
         drawGround();
         popMatrix();
@@ -635,20 +725,23 @@ function setup(shaders) {
         for (let i = 0; i < 9; i++) {
             let x = heliportPos[0] + 6 * Math.cos(theta);
             let z = heliportPos[2] + 6 * Math.sin(theta);
-            putTreeType1(x, z);
+            if (theta <= 70 || theta >105)
+                putTreeType1(x, z);
+                
             theta += 35;
         }
 
         theta = 0;
         for (let i = 0; i < 11; i++) {
-            let x = heliportPos[0] + 9 * Math.cos(theta);
-            let z = heliportPos[2] + 9 * Math.sin(theta);
-            if (theta != 180)
+            let x = heliportPos[0] + 8 * Math.cos(theta);
+            let z = heliportPos[2] + 8 * Math.sin(theta);
+            if ((theta <= 0 || theta >30 ) && theta != 300)
                 putTreeType1(x, z);
+            //console.log(x,z)
             theta += 30;
         }
         drawRoad();
-
+        popMatrix();
     }
 
 
@@ -680,8 +773,6 @@ function setup(shaders) {
         gl.uniformMatrix4fv(gl.getUniformLocation(program, "mProjection"), false, flatten(mProjection));
 
 
-        //loadMatrix(lookAt([-20, VP_DISTANCE/2, VP_DISTANCE], [0, 0, 0], [0, 1, 0]));
-
         if (heli.onGround) {
             heli.rotationV /= 1.05;
         } else {
@@ -696,7 +787,6 @@ function setup(shaders) {
 
     }
 
-    let x = document.getElementById('x');
     x.addEventListener('input', function () {
         let camX = VP_DISTANCE * Math.sin(x.value * 2 * Math.PI / 360)
             * Math.cos(y.value * 2 * Math.PI / 360);
@@ -706,7 +796,6 @@ function setup(shaders) {
         //console.log(y.value)
         loadMatrix(lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]));
     })
-    let y = document.getElementById('y');
     y.addEventListener('input', function () {
         let camX, camY, camZ;
         camX = VP_DISTANCE * Math.sin(x.value * 2 * Math.PI / 360)
@@ -714,16 +803,6 @@ function setup(shaders) {
         camY = VP_DISTANCE * Math.sin(y.value * 2 * Math.PI / 360);
         camZ = VP_DISTANCE * Math.cos(x.value * 2 * Math.PI / 360)
             * Math.cos(y.value * 2 * Math.PI / 360);
-        console.log(y.value)
-        /*if (y.value >= 90 && y.value <= 180) {
-            camZ *= -1
-            camX *= -1
-            console.log(camY)
-        } else if (y.value > 180 && y.value < 240) {
-            camX *= -1
-           
-        }*/
-
         loadMatrix(lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]));
     })
 
