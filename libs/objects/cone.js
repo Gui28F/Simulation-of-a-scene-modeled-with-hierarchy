@@ -12,7 +12,7 @@ var normals_buffer;
 var faces_buffer;
 var edges_buffer;
 
-var CYLINDER_N = 360;
+var CYLINDER_N = 30;
 
 function _addEdge(diskPoints, a, b, c, d) {
 	edges.push(a);
@@ -79,7 +79,20 @@ function _buildEdges(diskPoints) {
 }
 
 function _buildFaces(diskPoints) {
-	_buildCircle(diskPoints, 0, false);
+	_buildCircle(diskPoints, diskPoints + 1, true);
+	_buildSurface(diskPoints, 2 * (diskPoints + 1));
+}
+
+function _buildSurface(diskPoints, offset) {
+	var o = 0;
+
+	for (var i = 0; i < diskPoints - 1; i++) {
+		o = offset + i * 2;
+
+		_addFace(o, o + 1, o + 2, o + 3);
+	}
+
+	_addFace(o + 2, o + 3, offset, offset + 1);
 }
 
 function _buildVertices(diskPoints) {
@@ -106,12 +119,14 @@ function _buildVertices(diskPoints) {
 		var x = Math.cos(i * segment) * 0.5;
 		var z = Math.sin(i * segment) * 0.5;
         
+		top.push(vec3(x, 0.5, z));
 		bottom.push(vec3(x, -0.5, z));
-		middle.push(vec3(x, 0.5, z));
+		middle.push(vec3(0, 0.5, 0));
 		middle.push(vec3(x, -0.5, z));
 		
 		var normal = normalize(vec3(x, 0, z));
 
+		top_normals.push(up);
 		bottom_normals.push(down);
 		middle_normals.push(normal);
 		middle_normals.push(normal);
