@@ -1,5 +1,5 @@
 import { buildProgramFromSources, loadShadersFromURLS, setupWebGL } from "../libs/utils.js";
-import { ortho, lookAt, flatten, vec3, scale, rotateZ, mult, rotateY, subtract, add, scalem, translate } from "../libs/MV.js";
+import { ortho, lookAt, flatten, vec3, scale, rotateZ, mult, rotateY, subtract, add, scalem, translate, perspective } from "../libs/MV.js";
 import { modelView, loadMatrix, multRotationY, multScale, multRotationX, multRotationZ, pushMatrix, popMatrix, multTranslation } from "../libs/stack.js";
 import * as CYLINDER from '../libs/objects/cylinder.js';
 import * as SPHERE from '../libs/objects/sphere.js';
@@ -793,8 +793,6 @@ function setup(shaders) {
             if (new Date().getTime() - boxes[i].time < 5000) {
                 pushMatrix();
                 //multRotationY(boxes[i].r)//TODO
-
-                //console.log(3*Math.cos(heli.r))
                     multTranslation(boxes[i].pos);
                     multScale([2, 2, 2])
                     changeColor(BOX_COLOR);
@@ -850,10 +848,11 @@ function setup(shaders) {
             let cV = [eyeX, eyeZ]
             let tV = [-cV[1], cV[0]]
             let at = ([tV[0], eyeY, tV[1]]);
-            
+            at = normalize(at)
+            at[1] = eyeY
             // console.log(at)
             let m = lookAt([eyeX, eyeY, eyeZ], at, [0, 1, 0]);
-            mProjection = ortho((eyeX - 1), (eyeX + 1), (eyeY - 1), (eyeY + 1), 50, VP_DISTANCE);
+            mProjection = perspective(30, aspect,1, VP_DISTANCE*3);
             //m = mult(rotateY(heli.r), m)
             loadMatrix(m)
         }
