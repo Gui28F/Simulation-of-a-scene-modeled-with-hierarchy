@@ -76,7 +76,6 @@ function setup(shaders) {
         forward = false;
     }
     document.onkeydown = function (event) {
-        // console.log(event.key)
         switch (event.key) {
             case 'w':
                 mode = gl.LINES;
@@ -149,7 +148,6 @@ function setup(shaders) {
         let camZ = VP_DISTANCE * Math.cos(sR)
             * Math.cos(0);
         mView = lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]);
-       // mView =[[1,0,0,0],[0,1,0,0],[0,0,0,0],[0,0,0,1]]
     }
 
     function setUpView() {
