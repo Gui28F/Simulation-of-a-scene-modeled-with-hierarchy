@@ -50,7 +50,7 @@ let heli = {
 
 const RADIUS = Math.sqrt(heli.position[0] ** 2 + heli.position[1] ** 2 + heli.position[2] ** 2);
 let forward = false;
-let sceneR = 60;
+let sceneR = 150;
 let heliportPos = structuredClone([heli.position[0], 0, heli.position[2]]);
 let boxes = [];
 
@@ -884,7 +884,7 @@ function setup(shaders) {
 
     function drawCity() {
         pushMatrix();
-        multRotationY(150);
+        multRotationY(sceneR);
         pushMatrix();
         drawGround();
         popMatrix();
