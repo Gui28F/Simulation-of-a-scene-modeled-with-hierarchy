@@ -225,6 +225,7 @@ function setup(shaders) {
         if (!heli.onGround && !forward) {
             if (heli.velocity - 0.01 >= 0)
                 heli.velocity -= 0.01;
+            else heli.velocity = 0;
             if (heli.inclinationAngle - 0.6 >= 0)
                 heli.inclinationAngle -= 0.6
         }
