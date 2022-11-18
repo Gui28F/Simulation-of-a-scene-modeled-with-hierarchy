@@ -1,10 +1,10 @@
-import { buildProgramFromSources, loadShadersFromURLS, setupWebGL } from "../libs/utils.js";
-import { ortho, lookAt, flatten, vec3, scale, rotateZ, mult, rotateY, subtract, add, scalem, translate, perspective } from "../libs/MV.js";
-import { modelView, loadMatrix, multRotationY, multScale, multRotationX, multRotationZ, pushMatrix, popMatrix, multTranslation } from "../libs/stack.js";
-import * as CYLINDER from '../libs/objects/cylinder.js';
-import * as SPHERE from '../libs/objects/sphere.js';
-import * as CUBE from '../libs/objects/cube.js';
-import * as CONE from '../libs/objects/cone.js';
+import { buildProgramFromSources, loadShadersFromURLS, setupWebGL } from "./libs/utils.js";
+import { ortho, lookAt, flatten, vec3, scale, rotateZ, mult, rotateY, subtract, add, scalem, translate, perspective } from "./libs/MV.js";
+import { modelView, loadMatrix, multRotationY, multScale, multRotationX, multRotationZ, pushMatrix, popMatrix, multTranslation } from "./libs/stack.js";
+import * as CYLINDER from './libs/objects/cylinder.js';
+import * as SPHERE from './libs/objects/sphere.js';
+import * as CUBE from './libs/objects/cube.js';
+import * as CONE from './libs/objects/cone.js';
 
 
 const LANDING_PA_SKIDS_COLOR = vec3(1, 1, 0.35);
@@ -12,24 +12,24 @@ const LANDING_PE_SKIDS_COLOR = vec3(0.5, 0.5, 0.5);
 const CABINE_COLOR = vec3(1, 0, 0);
 const BLADE_COLOR = vec3(0, 0, 1);
 const ROTOR_COLOR = vec3(1, 1, 0.35);
-const GROUND_COLOR = vec3(0, 0.5, 0);
-const BUILDING_COLOR = vec3(0.3, 0.3, 0.3);
-const WINDOW_COLOR = vec3(0.7, 0.7, 0);
+const GROUND_COLOR = vec3(0.3, 0.5, 0.2);
+const BUILDING_COLOR = vec3(0.90, 0.90, 0.90);
+const WINDOW_COLOR = vec3(0.28, 0.71, 0.88);
 const BOX_COLOR = vec3(0.6, 0.37, 0.18);
 const HELIPORT_COLOR = vec3(0.6, 0.2, 0);
-const H_HELIPORT_COLOR = vec3(1, 1, 1);
+const H_HELIPORT_COLOR = vec3(1, 0, 0);
 const BOLE_TREE_COLOR = vec3(0.5, 0.27, 0.08);
 const TREE_LEAVES_COLOR1 = vec3(0, 0.25, 0);
 const TREE_LEAVES_COLOR2 = vec3(0, 0.3, 0);
 const TREE_LEAVES_COLOR3 = vec3(0, 0.35, 0);
-const H_HOSPITAL_COLOR = vec3(1, 1, 1);
-const ROAD_COLOR = vec3(0, 0, 0);
+const H_HOSPITAL_COLOR = vec3(1, 0,);
+const ROAD_COLOR = vec3(0.3, 0.3, 0.3);
 const ROAD_LINES_COLOR = vec3(1, 1, 1);
-const HOSPITAL_DOOR_COLOR = vec3(0, 0, 0.5);
+const HOSPITAL_DOOR_COLOR = vec3(0.28, 0.71, 0.88);
 let alertLightColor = vec3(1, 0, 0);
 /** @type WebGLRenderingContext */
 let gl;
-
+let time = 0;
 let mode;               // Drawing mode (gl.LINES or gl.TRIANGLES)
 const VP_DISTANCE = 60;
 let uColor;
@@ -38,16 +38,18 @@ let heli = {
     position: [-22, 1, 22], rotationV: 0,
     onGround: true, inclinationAngle: 0,
     maxInclinationAngle: 30, velocity: 0,
-    r: 135
+    rotationAngle: 135
 };
+
 const RADIUS = Math.sqrt(heli.position[0] ** 2 + heli.position[1] ** 2 + heli.position[2] ** 2);
+let forward = false;
 let sceneR = 60;
 let heliportPos = structuredClone([heli.position[0], 0, heli.position[2]]);
 let boxes = [];
 
 let x = document.getElementById('x');
 let y = document.getElementById('y');
-
+let mView;
 function setup(shaders) {
     let canvas = document.getElementById("gl-canvas");
     let aspect = canvas.width / canvas.height;
@@ -57,11 +59,15 @@ function setup(shaders) {
     let program = buildProgramFromSources(gl, shaders["shader.vert"], shaders["shader.frag"]);
     uColor = gl.getUniformLocation(program, "uColor")
     let mProjection = ortho(-VP_DISTANCE * aspect, VP_DISTANCE * aspect, -VP_DISTANCE, VP_DISTANCE, -3 * VP_DISTANCE, 3 * VP_DISTANCE);
-    loadMatrix(lookAt([0, VP_DISTANCE / 4, VP_DISTANCE], [0, 0, 0], [0, 1, 0]));
+    mView = lookAt([0, VP_DISTANCE / 4, VP_DISTANCE], [0, 0, 0], [0, 1, 0]);
+    loadMatrix(mView);
     mode = gl.TRIANGLES;
 
     resize_canvas();
     window.addEventListener("resize", resize_canvas);
+    document.onkeyup = function () {
+        forward = false;
+    }
     document.onkeydown = function (event) {
         // console.log(event.key)
         switch (event.key) {
@@ -102,7 +108,7 @@ function setup(shaders) {
                 if (heliCam) {
                     enableSliders();
                     mProjection = ortho(-VP_DISTANCE * aspect, VP_DISTANCE * aspect, -VP_DISTANCE, VP_DISTANCE, -3 * VP_DISTANCE, 3 * VP_DISTANCE);
-                    loadMatrix(lookAt([0, VP_DISTANCE / 4, VP_DISTANCE], [0, 0, 0], [0, 1, 0]));
+                    mView = lookAt([0, VP_DISTANCE / 4, VP_DISTANCE], [0, 0, 0], [0, 1, 0]);
                 } else
                     disableSliders();
                 heliCam = !heliCam;
@@ -141,7 +147,7 @@ function setup(shaders) {
         let camY = VP_DISTANCE * Math.sin(0);
         let camZ = VP_DISTANCE * Math.cos(sR)
             * Math.cos(0);
-        loadMatrix(lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]));
+        mView = lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]);
     }
 
     function setUpView() {
@@ -152,7 +158,7 @@ function setup(shaders) {
         let camY = VP_DISTANCE * Math.sin(Math.PI / 2);
         let camZ = VP_DISTANCE * Math.cos(sR)
             * Math.cos(Math.PI / 2);
-        loadMatrix(lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]));
+        mView = lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]);
     }
 
     function setRightView() {
@@ -163,7 +169,7 @@ function setup(shaders) {
         let camY = VP_DISTANCE * Math.sin(0);
         let camZ = VP_DISTANCE * Math.cos(sR - 3 * Math.PI / 2)
             * Math.cos(0);
-        loadMatrix(lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]));
+        mView = lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]);
     }
 
     function disableSliders() {
@@ -191,36 +197,42 @@ function setup(shaders) {
     }
 
     function dropBox() {
-        let box = { time: new Date().getTime(), pos: structuredClone([heli.position[0], heli.position[1] - 0.9, heli.position[2]]), r: JSON.parse(JSON.stringify(heli.r)) };
+        let pos = [];
+        let length = Math.sqrt(heli.position[2] ** 2 + heli.position[0] ** 2)
+        let tV = [heli.position[2] / length, -heli.position[0] / length]
+        pos[0] = heli.position[0] + tV[0] * heli.velocity;
+        pos[1] = heli.position[1] - 0.9;
+        pos[2] = heli.position[2] + tV[1] * heli.velocity;
+        let box = {
+            time: new Date().getTime(), pos: structuredClone(pos),
+            velocity: [tV[0] * heli.velocity, -0.3, tV[1] * heli.velocity]
+        };
         boxes.push(box)
-    }
-
-    function dist(pos1, pos2) {
-        return Math.sqrt((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2)
     }
 
     function moveHelicopeterFront() {
         if (!heli.onGround) {
-            if (heli.velocity + 0.05 <= 1)
-                heli.velocity += 0.05;
-            if (heli.inclinationAngle + 1.5 <= heli.maxInclinationAngle)
-                heli.inclinationAngle += 1.5;
+            forward = true;
+            if (heli.velocity + 0.02 <= 0.5)
+                heli.velocity += 0.02;
+            if (heli.inclinationAngle + 1.2 <= heli.maxInclinationAngle)
+                heli.inclinationAngle += 1.2 ;
         }
 
     }
 
     function moveHelicopeterBack() {
-        if (!heli.onGround) {
-            if (heli.velocity - 0.05 >= -1)
-                heli.velocity -= 0.05;
-            if (heli.inclinationAngle - 1.5 >= -30)
-                heli.inclinationAngle -= 1.5;
+        if (!heli.onGround && !forward) {
+            if (heli.velocity - 0.01 >= 0)
+                heli.velocity -= 0.01;
+            if (heli.inclinationAngle - 0.6 >= 0)
+                heli.inclinationAngle -= 0.6
         }
 
     }
 
     function moveHelicopeterUP() {
-        if (heli.rotationV > 100 && heli.position[1] < 80)
+        if (heli.rotationV > 100 && heli.position[1] < 60)
             heli.position[1] += 0.1;
         heli.onGround = false;
     }
@@ -234,6 +246,7 @@ function setup(shaders) {
                 heli.onGround = true;
         }
     }
+
 
     function drawBaseLeft() {
         pushMatrix();
@@ -260,7 +273,6 @@ function setup(shaders) {
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
-
     }
 
     function drawBaseRight() {
@@ -289,6 +301,7 @@ function setup(shaders) {
         CUBE.draw(gl, program, mode);
         popMatrix();
     }
+
     function drawCockpit() {
         multTranslation([0, 0.8, 0])
         multScale([5, 2.5, 2.5])
@@ -306,6 +319,7 @@ function setup(shaders) {
     }
 
     function drawTailRotor(r) {
+
         pushMatrix();
         multTranslation([6.1, 1.2, 0])
         multRotationZ(45);
@@ -381,14 +395,11 @@ function setup(shaders) {
     }
 
     function drawHelicopter(x, y, z, r) {
-
-        heli.position[0] = RADIUS * Math.cos(heli.r * 2 * Math.PI / 360);
-        heli.position[2] = RADIUS * Math.sin(heli.r * 2 * Math.PI / 360);
-
-
+        heli.position[0] = RADIUS * Math.cos(heli.rotationAngle * 2 * Math.PI / 360);
+        heli.position[2] = RADIUS * Math.sin(heli.rotationAngle * 2 * Math.PI / 360);
         multTranslation([x, y, z]);
         multRotationY(90)//TODO
-        multRotationY(-heli.r)
+        multRotationY(-heli.rotationAngle)
         multRotationZ(heli.inclinationAngle)
         pushMatrix();
         pushMatrix();
@@ -406,6 +417,7 @@ function setup(shaders) {
         popMatrix();
         drawMainRotor(r);
         popMatrix();
+
     }
 
     function drawGround() {
@@ -450,35 +462,35 @@ function setup(shaders) {
         CUBE.draw(gl, program, mode);
         popMatrix();
     }
-    /* function drawLeftWindowsOneSide(h) {
-         pushMatrix()
-         multTranslation([0, h, 0])
-         pushMatrix();
-         multTranslation([1.6, 2, 1])
-         changeColor(WINDOW_COLOR);
-         uploadModelView();
-         CUBE.draw(gl, program, mode);
-         popMatrix();
-         pushMatrix();
-         multTranslation([1.6, 2, -1])
-         changeColor(WINDOW_COLOR);
-         uploadModelView();
-         CUBE.draw(gl, program, mode);
-         popMatrix();
-         pushMatrix();
-         multTranslation([1.6, 0.5, 1])
-         changeColor(WINDOW_COLOR);
-         uploadModelView();
-         CUBE.draw(gl, program, mode);
-         popMatrix();
-         pushMatrix();
-         multTranslation([1.6, 0.5, -1])
-         changeColor(WINDOW_COLOR);
-         uploadModelView();
-         CUBE.draw(gl, program, mode);
-         popMatrix();
-         popMatrix();
-     }*/
+    // function drawLeftWindowsOneSide(h) {
+    //     pushMatrix()
+    //     multTranslation([0, h, 0])
+    //     pushMatrix();
+    //     multTranslation([1.6, 2, 1])
+    //     changeColor(WINDOW_COLOR);
+    //     uploadModelView();
+    //     CUBE.draw(gl, program, mode);
+    //     popMatrix();
+    //     pushMatrix();
+    //     multTranslation([1.6, 2, -1])
+    //     changeColor(WINDOW_COLOR);
+    //     uploadModelView();
+    //     CUBE.draw(gl, program, mode);
+    //     popMatrix();
+    //     pushMatrix();
+    //     multTranslation([1.6, 0.5, 1])
+    //     changeColor(WINDOW_COLOR);
+    //     uploadModelView();
+    //     CUBE.draw(gl, program, mode);
+    //     popMatrix();
+    //     pushMatrix();
+    //     multTranslation([1.6, 0.5, -1])
+    //     changeColor(WINDOW_COLOR);
+    //     uploadModelView();
+    //     CUBE.draw(gl, program, mode);
+    //     popMatrix();
+    //     popMatrix();
+    // }
 
     function drawRightWindows(h) {
         multTranslation([0, h, 0])
@@ -519,7 +531,7 @@ function setup(shaders) {
 
     function drawDor() {
         //multRotationY(45);
-        multTranslation([-7.7, -1.5, -0.1])
+        multTranslation([-7.7, -1, -0.1])
         multScale([1, 5, 3.5])
         changeColor(HOSPITAL_DOOR_COLOR);
         uploadModelView();
@@ -564,7 +576,6 @@ function setup(shaders) {
 
     }
 
-
     function drawBridgeWindow(z) {
         pushMatrix()
         multTranslation([40, 20.4, z])
@@ -575,7 +586,6 @@ function setup(shaders) {
         CUBE.draw(gl, program, mode);
         popMatrix()
     }
-
     function drawHospitalBridge() {
         //pushMatrix()
         //multTranslation([0, 0.5, 0])
@@ -588,23 +598,24 @@ function setup(shaders) {
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        pushMatrix();
-        multTranslation([32.7, 20.4, -2.2])
-        //multRotationY(45)
-        multScale([1, 4.2, 1])
-        changeColor(H_HOSPITAL_COLOR);
-        uploadModelView();
-        CUBE.draw(gl, program, mode);
-        popMatrix();
-        pushMatrix();
-        multTranslation([32.7, 20.4, 2.2])
-        //multRotationY(45)
-        multScale([1, 4.2, 1])
-        changeColor(H_HOSPITAL_COLOR);
-        uploadModelView();
-        CUBE.draw(gl, program, mode);
-        popMatrix();
         multTranslation([32.7, 20.4, 0])
+        pushMatrix();
+        multTranslation([0, 0, -2.2])
+        //multRotationY(45)
+        multScale([1, 4.2, 1])
+        changeColor(H_HOSPITAL_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+        popMatrix();
+        pushMatrix();
+        multTranslation([0, 0, 2.2])
+        //multRotationY(45)
+        multScale([1, 4.2, 1])
+        changeColor(H_HOSPITAL_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+        popMatrix();
+        multTranslation([0, 0, 0])
         //multRotationY(45)
         multScale([1, 1, 3.2])
         changeColor(H_HOSPITAL_COLOR);
@@ -620,8 +631,7 @@ function setup(shaders) {
     }
 
     function drawHospital() {
-        multTranslation([2, 0, -4])//TODO alterei os valores
-        multScale([1, 0.8, 0.8])//TODO
+        multTranslation([1, 0, 0])
         pushMatrix();
         multTranslation([40, 4, -20]);
         drawBuildType1();
@@ -637,15 +647,21 @@ function setup(shaders) {
     function drawHeliport() {
         multTranslation(heliportPos)
         pushMatrix();
-        multScale([10, 0.15, 10])
+        multScale([20, 0.15, 20])
         changeColor(HELIPORT_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
+        multScale([15, 0.2, 15])
+        changeColor(vec3(1, 1, 1));
+        uploadModelView();
+        SPHERE.draw(gl, program, mode);
+        popMatrix();
+        pushMatrix();
         multTranslation([0.1, 0, 2])
         multRotationY(90)
-        multScale([0.5, 0.151, 7])
+        multScale([0.3, 0.25, 7])
         changeColor(H_HELIPORT_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
@@ -653,17 +669,18 @@ function setup(shaders) {
         pushMatrix();
         multTranslation([0.1, 0, -2])
         multRotationY(90)
-        multScale([0.5, 0.151, 7])
+        multScale([0.3, 0.25, 7])
         changeColor(H_HELIPORT_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
-        multTranslation([0.1, 0, 0])//TODO
+        multTranslation([0.1, 0, -0.1])
         multRotationY(0)
-        multScale([0.5, 0.151, 3.3])
+        multScale([0.5, 0.25, 3.3])
         changeColor(H_HELIPORT_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
+
     }
 
     function drawTreeType1() {
@@ -700,21 +717,21 @@ function setup(shaders) {
     function putTrees() {
         let theta = 0;
         for (let i = 0; i < 9; i++) {
-            let x = heliportPos[0] + 10 * Math.cos(theta);
-            let z = heliportPos[2] + 10 * Math.sin(theta);
+            let x = heliportPos[0] + 20 * Math.cos(theta);
+            let z = heliportPos[2] + 20 * Math.sin(theta);
             if (theta <= 70 || theta > 105) {
                 pushMatrix();
                 multTranslation([x, 0, z])
                 drawTreeType1();
                 popMatrix();
             }
-            theta += 35;
+            theta += 45;
         }
 
         theta = 0;
         for (let i = 0; i < 11; i++) {
-            let x = heliportPos[0] + 20 * Math.cos(theta);
-            let z = heliportPos[2] + 20 * Math.sin(theta);
+            let x = heliportPos[0] + 25 * Math.cos(theta);
+            let z = heliportPos[2] + 25 * Math.sin(theta);
             if ((theta <= 0 || theta > 30) && theta != 300) {
                 pushMatrix();
                 multTranslation([x, 0, z])
@@ -727,8 +744,8 @@ function setup(shaders) {
 
     function drawRoad() {
         pushMatrix();
-        multTranslation([7, 0.01, -20])//TODO
-        multScale([54, 0.1, 6])//TODO
+        multTranslation([6.5, 0.01, -20])
+        multScale([53, 0.1, 6])
         changeColor(ROAD_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
@@ -741,26 +758,130 @@ function setup(shaders) {
         CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-        multTranslation([6.3, 0.01, -20.2])//TODO
-        multScale([57, 0.101, 0.4])//TODO
+        multTranslation([5.8, 0.01, -20])
+        multScale([55, 0.101, 0.4])
         changeColor(ROAD_LINES_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
-        pushMatrix();
         multTranslation([-22, 0.01, -1.9])
         multScale([0.4, 0.101, 37])
         changeColor(ROAD_LINES_COLOR);
         uploadModelView();
         CUBE.draw(gl, program, mode);
+    }
+
+    function drawStreetLamp() {
+        pushMatrix();
+        multTranslation([20, 5, -25]);
+        multScale([2, 10, 1]);
+        changeColor(vec3(0, 0, 0));
+        uploadModelView();
+        CYLINDER.draw(gl, program, mode);
         popMatrix();
+        pushMatrix();
+        multTranslation([20, 9, -25]);
+        multRotationX(90);
+        multScale([1, 3, 1]);
+        changeColor(vec3(0, 0, 0));
+        uploadModelView();
+        CYLINDER.draw(gl, program, mode);
+        popMatrix();
+        pushMatrix();
+        multTranslation([20, 11, -25]);
+        multScale([2, 2, 2]);
+        changeColor(vec3(1, 1, 0));
+        uploadModelView();
+        SPHERE.draw(gl, program, mode);
+        popMatrix();
+        pushMatrix();
+        multTranslation([20, 9, -23]);
+        multScale([2, 2, 2]);
+        changeColor(vec3(1, 1, 0));
+        uploadModelView();
+        SPHERE.draw(gl, program, mode);
+        popMatrix();
+        multTranslation([20, 9, -27]);
+        multScale([2, 2, 2]);
+        changeColor(vec3(1, 1, 0));
+        uploadModelView();
+        SPHERE.draw(gl, program, mode);
+    }
 
+    function putStreetLamps() {
+        pushMatrix();
+        drawStreetLamp();
+        popMatrix();
+        pushMatrix();
+        multTranslation([-25, 0, 0]);
+        drawStreetLamp();
+        popMatrix();
+        multTranslation([-50, 0, 25]);
+        drawStreetLamp();
+    }
 
+    function drawAmbulance() {
+        multTranslation([-20, 0, -20]);
+        multScale([0.5, 0.5, 0.5]);
+        pushMatrix();
+        multTranslation([-40, 7, -40]);
+        multScale([10, 10, 18]);
+        changeColor(vec3(0.8, 0, 0.2));
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+        popMatrix();
+        pushMatrix();
+        multTranslation([-40, 4, -30]);
+        multScale([10, 4, 5]);
+        changeColor(vec3(0.8, 0, 0.2));
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+        popMatrix();
+        pushMatrix();
+        multTranslation([-40, 1, -32]);
+        multRotationZ(90);
+        multScale([3, 9, 3]);
+        changeColor(vec3(0, 0, 0));
+        uploadModelView();
+        CYLINDER.draw(gl, program, mode);
+        popMatrix();
+        pushMatrix();
+        multTranslation([-40, 1, -45]);
+        multRotationZ(90);
+        multScale([3, 9, 3]);
+        changeColor(vec3(0, 0, 0));
+        uploadModelView();
+        CYLINDER.draw(gl, program, mode);
+        popMatrix();
+        pushMatrix();
+        multTranslation([-40, 8, -32]);
+        multScale([10, 4, 4]);
+        changeColor(vec3(0.68, 0.85, 0.9));
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+        popMatrix();
+        drawRedCross();
+    }
+
+    function drawRedCross() {
+        pushMatrix();
+        multTranslation([-45, 9, -45]);
+        multScale([1, 4, 1]);
+        changeColor(vec3(1, 1, 1));
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+        popMatrix();
+        multTranslation([-45, 9, -45]);
+        multRotationX(90);
+        multScale([1, 4, 1]);
+        changeColor(vec3(1, 1, 1));
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
     }
 
     function drawCity() {
         pushMatrix();
-        multRotationY(sceneR);
+        multRotationY(60);
         pushMatrix();
         drawGround();
         popMatrix();
@@ -773,11 +894,15 @@ function setup(shaders) {
         pushMatrix();
         drawHelicopter(heli.position[0], heli.position[1], heli.position[2], heli.rotationV);
         popMatrix();
-
         putTrees();
-
         pushMatrix();
         drawRoad();
+        popMatrix();
+        pushMatrix();
+        putStreetLamps();
+        popMatrix();
+        pushMatrix();
+        drawAmbulance();
         popMatrix();
         renderBoxes();
         popMatrix();
@@ -786,11 +911,15 @@ function setup(shaders) {
 
     function renderBoxes() {
         for (let i = 0; i < boxes.length; i++) {
-            if (boxes[i].pos[1] >= 0.5)
-                boxes[i].pos[1] -= 0.3;
-            if (new Date().getTime() - boxes[i].time < 5000) {
+            let deltaTime = (new Date().getTime() - boxes[i].time) / 1000;
+            let velocity = boxes[i].velocity;
+            if (boxes[i].pos[1] >= 0.5) {
+                boxes[i].pos[0] += velocity[0] * deltaTime / 8;
+                boxes[i].pos[1] += velocity[1];
+                boxes[i].pos[2] += velocity[2] * deltaTime / 8;
+            }
+            if (deltaTime < 5) {
                 pushMatrix();
-                //multRotationY(boxes[i].r)//TODO
                 multTranslation(boxes[i].pos);
                 multScale([2, 2, 2])
                 changeColor(BOX_COLOR);
@@ -813,15 +942,15 @@ function setup(shaders) {
         uploadModelView();
         CUBE.draw(gl, program, mode);
 
-    }
 
+    }
     function normalize(vec3) {
         let length_of_v = Math.sqrt((vec3[0] ** 2) + (vec3[1] ** 2) + (vec3[2] ** 2));
         return [vec3[0] / length_of_v, vec3[1] / length_of_v, vec3[2] / length_of_v];
     }
 
     function render() {
-
+        time++;
         window.requestAnimationFrame(render);
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -832,33 +961,26 @@ function setup(shaders) {
         if (heli.onGround) {
             heli.rotationV /= 1.05;
         } else {
-            heli.rotationV += 10;
-            heli.r += Math.max(-0.2, Math.min(heli.velocity, 0.2));
+            heli.rotationV = 10 * time;
+            heli.rotationAngle += heli.velocity;
         }
+
+        moveHelicopeterBack()
+      
         drawCity();
         if (heliCam) {
             let eyeX = heli.position[0];
             let eyeY = heli.position[1];
             let eyeZ = heli.position[2];
-            //let m = lookAt([eyeX, eyeY, eyeZ], [eyeX+1 , eyeY, eyeZ], [0, 1, 0]);
-
             let cV = [eyeX, eyeZ]
             let tV = [-cV[1], cV[0]]
-            //let at = ([tV[0], eyeY, tV[1]]);
             let at = [eyeX + tV[0], eyeY - RADIUS * Math.sin(heli.inclinationAngle * 2 * Math.PI / 360), eyeZ + tV[1]]
-            //for (let i = 0; i < 3; i++)
-            //at[i] = at[i] / 2;
-            console.log(sceneR)
-            //sceneR = 0;
-            let m = lookAt(heli.position, at, [0, 1, 0]);
-            sceneR = 0;
+            mView = lookAt(heli.position, at, [0, 1, 0]);
             mProjection = perspective(30, aspect, 3, 2 * VP_DISTANCE);
-            m = mult(m, rotateY(-sceneR))
-            //m = mult(rotateY(heli.r), m)
-            loadMatrix(m)
+            mView = mult(mView, rotateY(-sceneR))
 
         }
-
+        loadMatrix(mView)
     }
 
     x.addEventListener('input', function () {
@@ -868,7 +990,7 @@ function setup(shaders) {
         let camZ = VP_DISTANCE * Math.cos(x.value * 2 * Math.PI / 360)
             * Math.cos(y.value * 2 * Math.PI / 360);
         console.log(x.value, camX, camY, camZ)
-        loadMatrix(lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]));
+        mView = lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]);
     })
     y.addEventListener('input', function () {
         let camX, camY, camZ;
@@ -877,7 +999,7 @@ function setup(shaders) {
         camY = VP_DISTANCE * Math.sin(y.value * 2 * Math.PI / 360);
         camZ = VP_DISTANCE * Math.cos(x.value * 2 * Math.PI / 360)
             * Math.cos(y.value * 2 * Math.PI / 360);
-        loadMatrix(lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]));
+        mView = lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]);
     })
 
 }
