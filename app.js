@@ -818,7 +818,7 @@ function setup(shaders) {
         popMatrix();
         pushMatrix();
             multTranslation([0, 8, 8]);
-            multScale([10, 4, 4]);
+            multScale([10.1, 4, 4]);
             changeColor(WINDOW_AMBULANCE_COLOR);
             uploadModelView();
             CUBE.draw(gl, program, mode);
