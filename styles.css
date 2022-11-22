@@ -5,5 +5,5 @@ body {
     /*display: flex;*/
     margin: 0px;
     overflow: hidden; /*  Disable scrollbars */
-    background-color: black;
+    background-color: rgb(17.85, 17.85, 89.25);
 }

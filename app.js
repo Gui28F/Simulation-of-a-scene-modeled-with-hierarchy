@@ -112,12 +112,11 @@ function setup(shaders) {
                 break;
             case '5':
                 if (heliCam) {
-                    enableSliders();
-                    mProjection = ortho(-VP_DISTANCE * aspect, VP_DISTANCE * aspect, -VP_DISTANCE, VP_DISTANCE, -3 * VP_DISTANCE, 3 * VP_DISTANCE);
-                    mView = lookAt([0, VP_DISTANCE / 4, VP_DISTANCE], [0, 0, 0], [0, 1, 0]);
-                } else
+                    disableHeliCam();
+                } else {
                     disableSliders();
-                heliCam = !heliCam;
+                    heliCam = true;
+                }
                 break;
         }
     }
@@ -129,54 +128,29 @@ function setup(shaders) {
     gl.enable(gl.DEPTH_TEST);   // Enables Z-buffer depth test
 
     window.requestAnimationFrame(render);
+    function disableHeliCam() {
+        mProjection = ortho(-VP_DISTANCE * aspect, VP_DISTANCE * aspect, -VP_DISTANCE, VP_DISTANCE, -3 * VP_DISTANCE, 3 * VP_DISTANCE);
+        mView = lookAt([0, VP_DISTANCE / 4, VP_DISTANCE], [0, 0, 0], [0, 1, 0]);
+        heliCam = false;
+    }
 
-
-    /*
-    let camX = VP_DISTANCE * Math.sin(x.value * 2 * Math.PI / 360)
-            * Math.cos(y.value * 2 * Math.PI / 360);
-        let camY = VP_DISTANCE * Math.sin(y.value * 2 * Math.PI / 360);
-        let camZ = VP_DISTANCE * Math.cos(x.value * 2 * Math.PI / 360)
-            * Math.cos(y.value * 2 * Math.PI / 360);
-
-    */
-   function setFrontView() {
+    function setFrontView() {
         disableSliders();
-        // let sR = sceneR * 2 * Math.PI / 360;
-        // let camX = VP_DISTANCE * Math.sin(sR)
-        //     * Math.cos(0);
-        // let camY = VP_DISTANCE * Math.sin(0);
-        // let camZ = VP_DISTANCE * Math.cos(sR)
-        //     * Math.cos(0);
-        // mView = lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]);
-
-        mView = lookAt([0, 0, VP_DISTANCE],[0,0,0],[0,1,0]);
+        disableHeliCam();
+        mView = lookAt([0, 0, VP_DISTANCE], [0, 0, 0], [0, 1, 0]);
     }
 
     function setUpView() {
         disableSliders();
-        // let sR = sceneR * 2 * Math.PI / 360;
-        // let camX = VP_DISTANCE * Math.sin(sR)
-        //     * Math.cos(Math.PI / 2);
-        // let camY = VP_DISTANCE * Math.sin(Math.PI / 2);
-        // let camZ = VP_DISTANCE * Math.cos(sR)
-        //     * Math.cos(Math.PI / 2);
-        // mView = lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]);
-        
-
-        mView = lookAt([0, VP_DISTANCE, 0],[0,0,0],[0,0,-1]);
+        disableHeliCam();
+        mView = lookAt([0, VP_DISTANCE, 0], [0, 0, 0], [0, 0, -1]);
 
     }
 
     function setRightView() {
         disableSliders();
-        // let sR = sceneR * 2 * Math.PI / 360;
-        // let camX = VP_DISTANCE * Math.sin(sR - 3 * Math.PI / 2)
-        //     * Math.cos(0);
-        // let camY = VP_DISTANCE * Math.sin(0);
-        // let camZ = VP_DISTANCE * Math.cos(sR - 3 * Math.PI / 2)
-        //     * Math.cos(0);
-        // mView = lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]);
-        mView = lookAt([VP_DISTANCE, 0, 0],[0,0,0],[0,1,0]);
+        disableHeliCam();
+        mView = lookAt([VP_DISTANCE, 0, 0], [0, 0, 0], [0, 1, 0]);
     }
 
     function disableSliders() {
@@ -184,6 +158,7 @@ function setup(shaders) {
         document.getElementById("y-div").style.display = "none";
     }
     function enableSliders() {
+        disableHeliCam();
         document.getElementById("x-div").style.display = "block";
         document.getElementById("y-div").style.display = "block";
     }
@@ -230,23 +205,22 @@ function setup(shaders) {
 
     function moveHelicopeterBack() {
         if (!heli.onGround && !forward) {
-            if (heli.velocity - 0.01 >= 0)
-                heli.velocity -= 0.01;
+            if (heli.velocity - 0.005 >= 0)
+                heli.velocity -= 0.005;
             else heli.velocity = 0;
-            if (heli.inclinationAngle - 0.6 >= 0)
-                heli.inclinationAngle -= 0.6
+            if (heli.inclinationAngle - 0.3 >= 0)
+                heli.inclinationAngle -= 0.3
         }
 
     }
 
     function moveHelicopeterUP() {
-        if (heli.rotationV > 100 && heli.position[1] < 60)
+        if (heli.rotationV > 1000 && heli.position[1] < 60)
             heli.position[1] += 0.1;
         heli.onGround = false;
     }
 
     function moveHelicopeterDown() {
-        // console.log(heli.inclinationAngle)
         if (0 <= heli.inclinationAngle && heli.inclinationAngle <= 1.5) {
             if (!heli.onGround)
                 heli.position[1] -= 0.1;
@@ -406,7 +380,7 @@ function setup(shaders) {
         heli.position[0] = RADIUS * Math.cos(heli.rotationAngle * 2 * Math.PI / 360);
         heli.position[2] = RADIUS * Math.sin(heli.rotationAngle * 2 * Math.PI / 360);
         multTranslation(heli.position);
-        multRotationY(90)//TODO
+        multRotationY(90)
         multRotationY(-heli.rotationAngle)
         multRotationZ(heli.inclinationAngle)
         pushMatrix();
@@ -429,7 +403,6 @@ function setup(shaders) {
     }
 
     function drawGround() {
-        // multRotationY(45)
         multTranslation([0, -0.5, 0])
         multScale([100, 1, 100]);
         changeColor(GROUND_COLOR);
@@ -440,25 +413,25 @@ function setup(shaders) {
     function drawLeftWindows(h) {
         multTranslation([0, h, 0])
         pushMatrix();
-            multTranslation([-0.1, 2, 3])
-            multScale([16.5, 2, 2])
-            changeColor(WINDOW_COLOR);
-            uploadModelView();
-            CUBE.draw(gl, program, mode);
+        multTranslation([-0.1, 2, 3])
+        multScale([16.5, 2, 2])
+        changeColor(WINDOW_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            multTranslation([-0.1, 2, -3])
-            multScale([16.5, 2, 2])
-            changeColor(WINDOW_COLOR);
-            uploadModelView();
-            CUBE.draw(gl, program, mode);
+        multTranslation([-0.1, 2, -3])
+        multScale([16.5, 2, 2])
+        changeColor(WINDOW_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            multTranslation([-0.1, 8, 3])
-            multScale([16.5, 2, 2])
-            changeColor(WINDOW_COLOR);
-            uploadModelView();
-            CUBE.draw(gl, program, mode);
+        multTranslation([-0.1, 8, 3])
+        multScale([16.5, 2, 2])
+        changeColor(WINDOW_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
         popMatrix();
         multTranslation([-0.1, 8, -3])
         multScale([16.5, 2, 2])
@@ -470,25 +443,25 @@ function setup(shaders) {
     function drawRightWindows(h) {
         multTranslation([0, h, 0])
         pushMatrix();
-            multTranslation([-3, 8, 0])
-            multScale([2, 2, 16.5])
-            changeColor(WINDOW_COLOR);
-            uploadModelView();
-            CUBE.draw(gl, program, mode);
+        multTranslation([-3, 8, 0])
+        multScale([2, 2, 16.5])
+        changeColor(WINDOW_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            multTranslation([-3, 2, 0])
-            multScale([2, 2, 16.5])
-            changeColor(WINDOW_COLOR);
-            uploadModelView();
-            CUBE.draw(gl, program, mode);
+        multTranslation([-3, 2, 0])
+        multScale([2, 2, 16.5])
+        changeColor(WINDOW_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            multTranslation([3, 2, 0])
-            multScale([2, 2, 16.5])
-            changeColor(WINDOW_COLOR);
-            uploadModelView();
-            CUBE.draw(gl, program, mode);
+        multTranslation([3, 2, 0])
+        multScale([2, 2, 16.5])
+        changeColor(WINDOW_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
         popMatrix();
         multTranslation([3, 8, 0])
         multScale([2, 2, 16.5])
@@ -518,32 +491,32 @@ function setup(shaders) {
 
     function drawBuildType1() {
         pushMatrix();
-            multTranslation([0, 18, 0])
-            multScale([16, 44, 16])
-            changeColor(BUILDING_COLOR);
-            uploadModelView();
-            CUBE.draw(gl, program, mode);
+        multTranslation([0, 18, 0])
+        multScale([16, 44, 16])
+        changeColor(BUILDING_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            drawDor();
+        drawDor();
         popMatrix();
         pushMatrix();
-            drawLeftWindows(29);
+        drawLeftWindows(29);
         popMatrix();
         pushMatrix();
-            drawLeftWindows(17);
+        drawLeftWindows(17);
         popMatrix();
         pushMatrix();
-            drawLeftWindows(5);
+        drawLeftWindows(5);
         popMatrix();
         pushMatrix();
-            drawRightWindows(29);
+        drawRightWindows(29);
         popMatrix();
         pushMatrix();
-            drawRightWindows(17);
+        drawRightWindows(17);
         popMatrix();
         pushMatrix();
-            drawRightWindows(5);
+        drawRightWindows(5);
         popMatrix();
         drawAlertLight();
 
@@ -551,43 +524,43 @@ function setup(shaders) {
 
     function drawBridgeWindow(z) {
         pushMatrix()
-            multTranslation([40, 20.4, z])
-            multScale([16, 2, 2])
-            changeColor(WINDOW_COLOR);
-            uploadModelView();
-            CUBE.draw(gl, program, mode);
+        multTranslation([40, 20.4, z])
+        multScale([16, 2, 2])
+        changeColor(WINDOW_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
         popMatrix()
     }
 
     function drawHospitalBridge() {
         pushMatrix();
-            multTranslation([40, 20.3, 0])
-            multRotationY(90)
-            multScale([25, 13.6, 15])
-            changeColor(BUILDING_COLOR);
-            uploadModelView();
-            CUBE.draw(gl, program, mode);
+        multTranslation([40, 20.3, 0])
+        multRotationY(90)
+        multScale([25, 13.6, 15])
+        changeColor(BUILDING_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            multTranslation([32.7, 20.4, 0])
-            pushMatrix();
-                multTranslation([0, 0, -2.2])
-                multScale([1, 4.2, 1])
-                changeColor(H_HOSPITAL_COLOR);
-                uploadModelView();
-                CUBE.draw(gl, program, mode);
-            popMatrix();
-            pushMatrix();
-                multTranslation([0, 0, 2.2])
-                multScale([1, 4.2, 1])
-                changeColor(H_HOSPITAL_COLOR);
-                uploadModelView();
-                CUBE.draw(gl, program, mode);
-            popMatrix()
-            multScale([1, 1, 3.2])
-            changeColor(H_HOSPITAL_COLOR);
-            uploadModelView();
-            CUBE.draw(gl, program, mode);
+        multTranslation([32.7, 20.4, 0])
+        pushMatrix();
+        multTranslation([0, 0, -2.2])
+        multScale([1, 4.2, 1])
+        changeColor(H_HOSPITAL_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+        popMatrix();
+        pushMatrix();
+        multTranslation([0, 0, 2.2])
+        multScale([1, 4.2, 1])
+        changeColor(H_HOSPITAL_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
+        popMatrix()
+        multScale([1, 1, 3.2])
+        changeColor(H_HOSPITAL_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
         popMatrix();
         drawBridgeWindow(-10);
         drawBridgeWindow(-5);
@@ -598,12 +571,12 @@ function setup(shaders) {
     function drawHospital() {
         multTranslation([1, 0, 0])
         pushMatrix();
-            multTranslation([40, 4, -20]);
-            drawBuildType1();
+        multTranslation([40, 4, -20]);
+        drawBuildType1();
         popMatrix();
         pushMatrix();
-            multTranslation([40, 4, 20])
-            drawBuildType1();
+        multTranslation([40, 4, 20])
+        drawBuildType1();
         popMatrix();
         drawHospitalBridge();
 
@@ -612,33 +585,33 @@ function setup(shaders) {
     function drawHeliport() {
         multTranslation(heliportPos)
         pushMatrix();
-            multScale([20, 0.15, 20])
-            changeColor(HELIPORT_COLOR);
-            uploadModelView();
-            CUBE.draw(gl, program, mode);
+        multScale([20, 0.15, 20])
+        changeColor(HELIPORT_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            multScale([15, 0.2, 15])
-            changeColor(O_OF_HELIPORT);
-            uploadModelView();
-            SPHERE.draw(gl, program, mode);
+        multScale([15, 0.2, 15])
+        changeColor(O_OF_HELIPORT);
+        uploadModelView();
+        SPHERE.draw(gl, program, mode);
         popMatrix();
-       
+
         pushMatrix();
-            multTranslation([0.1, 0, 2])
-            multRotationY(90)
-            multScale([0.3, 0.25, 7])
-            changeColor(H_HELIPORT_COLOR);
-            uploadModelView();
-            CUBE.draw(gl, program, mode);
+        multTranslation([0.1, 0, 2])
+        multRotationY(90)
+        multScale([0.3, 0.25, 7])
+        changeColor(H_HELIPORT_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            multTranslation([0.1, 0, -2])
-            multRotationY(90)
-            multScale([0.3, 0.25, 7])
-            changeColor(H_HELIPORT_COLOR);
-            uploadModelView();
-            CUBE.draw(gl, program, mode);
+        multTranslation([0.1, 0, -2])
+        multRotationY(90)
+        multScale([0.3, 0.25, 7])
+        changeColor(H_HELIPORT_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
         popMatrix();
         multTranslation([0.1, 0, -0.1])
         multScale([0.5, 0.25, 3.3])
@@ -649,25 +622,25 @@ function setup(shaders) {
 
     function drawTreeType1() {
         pushMatrix();
-            multTranslation([0, 3.5, 0])
-            multScale([1, 7, 1])
-            changeColor(BOLE_TREE_COLOR);
-            uploadModelView();
-            CYLINDER.draw(gl, program, mode);
+        multTranslation([0, 3.5, 0])
+        multScale([1, 7, 1])
+        changeColor(BOLE_TREE_COLOR);
+        uploadModelView();
+        CYLINDER.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            multTranslation([0, 7, 0])
-            multScale([4, 6, 4])
-            changeColor(TREE_LEAVES_COLOR1);
-            uploadModelView();
-            CONE.draw(gl, program, mode);
+        multTranslation([0, 7, 0])
+        multScale([4, 6, 4])
+        changeColor(TREE_LEAVES_COLOR1);
+        uploadModelView();
+        CONE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            multTranslation([0, 9, 0])
-            multScale([3.3, 6, 3.3])
-            changeColor(TREE_LEAVES_COLOR2);
-            uploadModelView();
-            CONE.draw(gl, program, mode);
+        multTranslation([0, 9, 0])
+        multScale([3.3, 6, 3.3])
+        changeColor(TREE_LEAVES_COLOR2);
+        uploadModelView();
+        CONE.draw(gl, program, mode);
         popMatrix();
         multTranslation([0, 11, 0])
         multScale([2.8, 6, 2.8])
@@ -683,8 +656,8 @@ function setup(shaders) {
             let z = heliportPos[2] + 20 * Math.sin(theta);
             if (theta <= 70 || theta > 105) {
                 pushMatrix();
-                    multTranslation([x, 0, z])
-                    drawTreeType1();
+                multTranslation([x, 0, z])
+                drawTreeType1();
                 popMatrix();
             }
             theta += 45;
@@ -696,8 +669,8 @@ function setup(shaders) {
             let z = heliportPos[2] + 25 * Math.sin(theta);
             if ((theta <= 0 || theta > 30) && theta != 300) {
                 pushMatrix();
-                    multTranslation([x, 0, z])
-                    drawTreeType1();
+                multTranslation([x, 0, z])
+                drawTreeType1();
                 popMatrix();
             }
             theta += 30;
@@ -706,25 +679,25 @@ function setup(shaders) {
 
     function drawRoad() {
         pushMatrix();
-            multTranslation([6.5, 0.01, -20])
-            multScale([53, 0.1, 6])
-            changeColor(ROAD_COLOR);
-            uploadModelView();
-            CUBE.draw(gl, program, mode);
+        multTranslation([6.5, 0.01, -20])
+        multScale([53, 0.1, 6])
+        changeColor(ROAD_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            multTranslation([-22, 0.01, -3])
-            multScale([6, 0.1, 40])
-            changeColor(ROAD_COLOR);
-            uploadModelView();
-            CUBE.draw(gl, program, mode);
+        multTranslation([-22, 0.01, -3])
+        multScale([6, 0.1, 40])
+        changeColor(ROAD_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            multTranslation([5.8, 0.01, -20])
-            multScale([55, 0.101, 0.4])
-            changeColor(ROAD_LINES_COLOR);
-            uploadModelView();
-            CUBE.draw(gl, program, mode);
+        multTranslation([5.7, 0.01, -20.2])
+        multScale([55, 0.101, 0.4])
+        changeColor(ROAD_LINES_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
         popMatrix();
         multTranslation([-22, 0.01, -1.9])
         multScale([0.4, 0.101, 37])
@@ -735,33 +708,33 @@ function setup(shaders) {
 
     function drawStreetLamp() {
         pushMatrix();
-            multTranslation([0, 5, 0]);
-            multScale([2, 10, 1]);
-            changeColor(STAKE_LIGHT_COLOR);
-            uploadModelView();
-            CYLINDER.draw(gl, program, mode);
+        multTranslation([0, 5, 0]);
+        multScale([2, 10, 1]);
+        changeColor(STAKE_LIGHT_COLOR);
+        uploadModelView();
+        CYLINDER.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            multTranslation([0, 9, 0]);
-            multRotationX(90);
-            multScale([1, 3, 1]);
-            changeColor(STAKE_LIGHT_COLOR);
-            uploadModelView();
-            CYLINDER.draw(gl, program, mode);
+        multTranslation([0, 9, 0]);
+        multRotationX(90);
+        multScale([1, 3, 1]);
+        changeColor(STAKE_LIGHT_COLOR);
+        uploadModelView();
+        CYLINDER.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            multTranslation([0, 11, 0]);
-            multScale([2, 2, 2]);
-            changeColor(LIGHT_COLOR);
-            uploadModelView();
-            SPHERE.draw(gl, program, mode);
+        multTranslation([0, 11, 0]);
+        multScale([2, 2, 2]);
+        changeColor(LIGHT_COLOR);
+        uploadModelView();
+        SPHERE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            multTranslation([0, 9, -2]);
-            multScale([2, 2, 2]);
-            changeColor(LIGHT_COLOR);
-            uploadModelView();
-            SPHERE.draw(gl, program, mode);
+        multTranslation([0, 9, -2]);
+        multScale([2, 2, 2]);
+        changeColor(LIGHT_COLOR);
+        uploadModelView();
+        SPHERE.draw(gl, program, mode);
         popMatrix();
         multTranslation([0, 9, 2]);
         multScale([2, 2, 2]);
@@ -772,56 +745,56 @@ function setup(shaders) {
 
     function putStreetLamps() {
         pushMatrix();
-            multTranslation([20, 0, -25]);
-            drawStreetLamp();
+        multTranslation([20, 0, -25]);
+        drawStreetLamp();
         popMatrix();
         pushMatrix();
-            multTranslation([0, 0, -25]);
-            drawStreetLamp();
+        multTranslation([0, 0, -25]);
+        drawStreetLamp();
         popMatrix();
-            multTranslation([-27, 0, -5]);
-            drawStreetLamp();
+        multTranslation([-27, 0, -5]);
+        drawStreetLamp();
     }
 
     function drawAmbulance() {
         multTranslation([-40, 0, -40]);
         multScale([0.5, 0.5, 0.5]);
         pushMatrix();
-            multTranslation([0, 7, 0]);
-            multScale([10, 10, 18]);
-            changeColor(AMBULANCE_COLOR);
-            uploadModelView();
-            CUBE.draw(gl, program, mode);
+        multTranslation([0, 7, 0]);
+        multScale([10, 10, 18]);
+        changeColor(AMBULANCE_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            multTranslation([0, 4, 10]);
-            multScale([10, 4, 5]);
-            changeColor(AMBULANCE_COLOR);
-            uploadModelView();
-            CUBE.draw(gl, program, mode);
+        multTranslation([0, 4, 10]);
+        multScale([10, 4, 5]);
+        changeColor(AMBULANCE_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            multTranslation([0, 1, 8]);
-            multRotationZ(90);
-            multScale([3, 9, 3]);
-            changeColor(AMBULANCE_WHEELS_COLOR);
-            uploadModelView();
-            CYLINDER.draw(gl, program, mode);
+        multTranslation([0, 1, 8]);
+        multRotationZ(90);
+        multScale([3, 9, 3]);
+        changeColor(AMBULANCE_WHEELS_COLOR);
+        uploadModelView();
+        CYLINDER.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            multTranslation([0, 1, -5]);
-            multRotationZ(90);
-            multScale([3, 9, 3]);
-            changeColor(AMBULANCE_WHEELS_COLOR);
-            uploadModelView();
-            CYLINDER.draw(gl, program, mode);
+        multTranslation([0, 1, -5]);
+        multRotationZ(90);
+        multScale([3, 9, 3]);
+        changeColor(AMBULANCE_WHEELS_COLOR);
+        uploadModelView();
+        CYLINDER.draw(gl, program, mode);
         popMatrix();
         pushMatrix();
-            multTranslation([0, 8, 8]);
-            multScale([10.1, 4, 4]);
-            changeColor(WINDOW_AMBULANCE_COLOR);
-            uploadModelView();
-            CUBE.draw(gl, program, mode);
+        multTranslation([0, 8, 8]);
+        multScale([10.1, 4, 4]);
+        changeColor(WINDOW_AMBULANCE_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
         popMatrix();
         multTranslation([-5, 9, -5]);
         drawRedCross();
@@ -829,10 +802,10 @@ function setup(shaders) {
 
     function drawRedCross() {
         pushMatrix();
-            multScale([1, 4, 1]);
-            changeColor(AMBULANCE_CROSS_COLOR);
-            uploadModelView();
-            CUBE.draw(gl, program, mode);
+        multScale([1, 4, 1]);
+        changeColor(AMBULANCE_CROSS_COLOR);
+        uploadModelView();
+        CUBE.draw(gl, program, mode);
         popMatrix();
         multRotationX(90);
         multScale([1, 4, 1]);
@@ -842,32 +815,32 @@ function setup(shaders) {
     }
 
     function drawCity() {
-         pushMatrix();
-             multRotationY(sceneR);
-             pushMatrix();
-                 drawGround();
-             popMatrix();
-            pushMatrix();
-                drawHospital();
-            popMatrix();
-            pushMatrix();
-                drawHeliport();
-            popMatrix();
-            pushMatrix();
-                drawHelicopter(heli.rotationV);
-            popMatrix();
-                putTrees();
-            pushMatrix();
-                drawRoad();
-            popMatrix();
-            pushMatrix();
-                putStreetLamps();
-            popMatrix();
-            pushMatrix();
-                drawAmbulance();
-            popMatrix();
-                renderBoxes();
-         popMatrix();
+        pushMatrix();
+        multRotationY(sceneR);
+        pushMatrix();
+        drawGround();
+        popMatrix();
+        pushMatrix();
+        drawHospital();
+        popMatrix();
+        pushMatrix();
+        drawHeliport();
+        popMatrix();
+        pushMatrix();
+        drawHelicopter(heli.rotationV);
+        popMatrix();
+        putTrees();
+        pushMatrix();
+        drawRoad();
+        popMatrix();
+        pushMatrix();
+        putStreetLamps();
+        popMatrix();
+        pushMatrix();
+        drawAmbulance();
+        popMatrix();
+        renderBoxes();
+        popMatrix();
     }
 
 
@@ -882,8 +855,8 @@ function setup(shaders) {
             }
             if (deltaTime < 5) {
                 pushMatrix();
-                    multTranslation(boxes[i].pos);
-                    multScale([2, 2, 2])
+                multTranslation(boxes[i].pos);
+                multScale([2, 2, 2])
                 changeColor(BOX_COLOR);
                 uploadModelView();
                 CUBE.draw(gl, program, mode);
@@ -891,11 +864,6 @@ function setup(shaders) {
             }
             boxes.slice(i, 1);
         }
-    }
-
-    function normalize(vec3) {
-        let length_of_v = Math.sqrt((vec3[0] ** 2) + (vec3[1] ** 2) + (vec3[2] ** 2));
-        return [vec3[0] / length_of_v, vec3[1] / length_of_v, vec3[2] / length_of_v];
     }
 
     function render() {
