@@ -613,7 +613,7 @@ function setup(shaders) {
         uploadModelView();
         CUBE.draw(gl, program, mode);
         popMatrix();
-        multTranslation([0.1, 0, -0.1])
+        multTranslation([0.1, 0, 0])
         multScale([0.5, 0.25, 3.3])
         changeColor(H_HELIPORT_COLOR);
         uploadModelView();
@@ -848,7 +848,7 @@ function setup(shaders) {
         for (let i = 0; i < boxes.length; i++) {
             let deltaTime = (new Date().getTime() - boxes[i].time) / 1000;
             let velocity = boxes[i].velocity;
-            if (boxes[i].pos[1] >= 0.5) {
+            if (boxes[i].pos[1] >= 1) {
                 boxes[i].pos[0] += velocity[0] * deltaTime / 8;
                 boxes[i].pos[1] += velocity[1];
                 boxes[i].pos[2] += velocity[2] * deltaTime / 8;
