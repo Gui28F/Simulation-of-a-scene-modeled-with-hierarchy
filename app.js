@@ -191,6 +191,7 @@ function setup(shaders) {
         pos[1] = newPos[1] - 0.9;
         pos[2] = newPos[2] + tV[1] * heli.velocity;
         newPos.pop()
+        newPos[1] -= 2;
         let box = {
             time: new Date().getTime(), pos: structuredClone(newPos),
             velocity: [tV[0] * heli.velocity, -0.3, tV[1] * heli.velocity]
