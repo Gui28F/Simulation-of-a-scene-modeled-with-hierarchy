@@ -1,5 +1,5 @@
 import { buildProgramFromSources, loadShadersFromURLS, setupWebGL } from "./libs/utils.js";
-import { ortho, lookAt, flatten, vec3, scale, rotateZ, mult, rotateY, subtract, add, scalem, translate, perspective } from "./libs/MV.js";
+import { ortho, lookAt, flatten, vec3, vec4, mult, rotateY, perspective, inverse } from "./libs/MV.js";
 import { modelView, loadMatrix, multRotationY, multScale, multRotationX, multRotationZ, pushMatrix, popMatrix, multTranslation } from "./libs/stack.js";
 import * as CYLINDER from './libs/objects/cylinder.js';
 import * as SPHERE from './libs/objects/sphere.js';
@@ -45,7 +45,7 @@ let heli = {
     position: [-22, 1, 22], rotationV: 0,
     onGround: true, inclinationAngle: 0,
     maxInclinationAngle: 30, velocity: 0,
-    rotationAngle: 135
+    rotationAngle: 0
 };
 
 const RADIUS = Math.sqrt(heli.position[0] ** 2 + heli.position[1] ** 2 + heli.position[2] ** 2);
@@ -57,6 +57,7 @@ let boxes = [];
 let x = document.getElementById('x');
 let y = document.getElementById('y');
 let mView;
+let mHeli;
 function setup(shaders) {
     let canvas = document.getElementById("gl-canvas");
     let aspect = canvas.width / canvas.height;
@@ -72,9 +73,17 @@ function setup(shaders) {
 
     resize_canvas();
     window.addEventListener("resize", resize_canvas);
-    document.onkeyup = function () {
-        forward = false;
+    document.onkeyup = function (event) {
+        switch (event.key) {
+            case 'ArrowLeft':
+                forward = false;
+                break;
+
+
+        }
+
     }
+
     document.onkeydown = function (event) {
         switch (event.key) {
             case 'w':
@@ -91,9 +100,6 @@ function setup(shaders) {
                 break;
             case 'ArrowLeft':
                 moveHelicopeterFront();
-                break;
-            case 'ArrowRight':
-                moveHelicopeterBack();
                 break;
             case ' ':
                 dropBox();
@@ -180,13 +186,16 @@ function setup(shaders) {
 
     function dropBox() {
         let pos = [];
-        let length = Math.sqrt(heli.position[2] ** 2 + heli.position[0] ** 2)
-        let tV = [heli.position[2] / length, -heli.position[0] / length]
-        pos[0] = heli.position[0] + tV[0] * heli.velocity;
-        pos[1] = heli.position[1] - 0.9;
-        pos[2] = heli.position[2] + tV[1] * heli.velocity;
+        let model = mult(inverse(mView), mHeli);
+        let newPos = mult(model, vec4(0, 0, 0, 1))
+        let length = Math.sqrt(newPos[2] ** 2 + newPos[0] ** 2)
+        let tV = [newPos[2] / length, -newPos[0] / length]
+        pos[0] = newPos[0] + tV[0] * heli.velocity;
+        pos[1] = newPos[1] - 0.9;
+        pos[2] = newPos[2] + tV[1] * heli.velocity;
+        newPos.pop()
         let box = {
-            time: new Date().getTime(), pos: structuredClone(pos),
+            time: new Date().getTime(), pos: structuredClone(newPos),
             velocity: [tV[0] * heli.velocity, -0.3, tV[1] * heli.velocity]
         };
         boxes.push(box)
@@ -377,28 +386,36 @@ function setup(shaders) {
     }
 
     function drawHelicopter(r) {
-        heli.position[0] = RADIUS * Math.cos(heli.rotationAngle * 2 * Math.PI / 360);
-        heli.position[2] = RADIUS * Math.sin(heli.rotationAngle * 2 * Math.PI / 360);
-        multTranslation(heli.position);
-        multRotationY(90)
+
+        //multTranslation(heli.position);
+        //multRotationY(heli.velocity)
+        //multRotationY(-heli.rotationAngle)
+        pushMatrix()
         multRotationY(-heli.rotationAngle)
+        multTranslation(heli.position)
+        multRotationY(-60)
         multRotationZ(heli.inclinationAngle)
         pushMatrix();
-        pushMatrix();
+        //pushMatrix();
         drawBaseLeft();
+        popMatrix();
+        pushMatrix()
         drawBaseRight();
         popMatrix();
+
         pushMatrix();
-        pushMatrix();
+        //pushMatrix();
         drawCockpit();
+        mHeli = modelView()
         popMatrix();
         pushMatrix();
         drawTailBoom();
         popMatrix();
+        pushMatrix();
         drawTailRotor(r);
         popMatrix();
         drawMainRotor(r);
-        popMatrix();
+        popMatrix()
 
     }
 
@@ -596,7 +613,6 @@ function setup(shaders) {
         uploadModelView();
         SPHERE.draw(gl, program, mode);
         popMatrix();
-
         pushMatrix();
         multTranslation([0.1, 0, 2])
         multRotationY(90)
@@ -829,7 +845,9 @@ function setup(shaders) {
         pushMatrix();
         drawHelicopter(heli.rotationV);
         popMatrix();
+        pushMatrix()
         putTrees();
+        popMatrix()
         pushMatrix();
         drawRoad();
         popMatrix();
@@ -839,8 +857,8 @@ function setup(shaders) {
         pushMatrix();
         drawAmbulance();
         popMatrix();
-        renderBoxes();
         popMatrix();
+
     }
 
 
@@ -866,6 +884,21 @@ function setup(shaders) {
         }
     }
 
+    function updateHeliCam() {
+        if (!heliCam) return;
+        let model = mult(inverse(mView), mHeli);
+        let newPos = mult(model, vec4(-0.5, 0, 0, 1))
+        newPos.pop()
+        let eyeX = newPos[0];
+        let eyeY = newPos[1];
+        let eyeZ = newPos[2];
+        let cV = [eyeX, eyeZ]
+        let tV = [-cV[1], cV[0]]
+        let at = [eyeX + tV[0], eyeY - RADIUS * Math.sin(heli.inclinationAngle * 2 * Math.PI / 360), eyeZ + tV[1]]
+        mView = lookAt(newPos, at, [0, 1, 0]);
+        mProjection = perspective(90, aspect, 1, 2 * VP_DISTANCE);
+    }
+
     function render() {
         time++;
         window.requestAnimationFrame(render);
@@ -873,8 +906,11 @@ function setup(shaders) {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         gl.useProgram(program);
-
         gl.uniformMatrix4fv(gl.getUniformLocation(program, "mProjection"), false, flatten(mProjection));
+        loadMatrix(mView)
+        /* heli.position[0] = RADIUS * Math.cos(heli.rotationAngle * 2 * Math.PI / 360);
+         heli.position[2] = RADIUS * Math.sin(heli.rotationAngle * 2 * Math.PI / 360);*/
+
         if (heli.onGround) {
             heli.rotationV /= 1.05;
         } else {
@@ -885,19 +921,9 @@ function setup(shaders) {
         moveHelicopeterBack()
 
         drawCity();
-        if (heliCam) {
-            let eyeX = heli.position[0];
-            let eyeY = heli.position[1];
-            let eyeZ = heli.position[2];
-            let cV = [eyeX, eyeZ]
-            let tV = [-cV[1], cV[0]]
-            let at = [eyeX + tV[0], eyeY - RADIUS * Math.sin(heli.inclinationAngle * 2 * Math.PI / 360), eyeZ + tV[1]]
-            mView = lookAt(heli.position, at, [0, 1, 0]);
-            mProjection = perspective(30, aspect, 3, 2 * VP_DISTANCE);
-            mView = mult(mView, rotateY(-sceneR))
+        renderBoxes();
+        updateHeliCam();
 
-        }
-        loadMatrix(mView)
     }
 
     x.addEventListener('input', function () {
@@ -906,7 +932,6 @@ function setup(shaders) {
         let camY = VP_DISTANCE * Math.sin(y.value * 2 * Math.PI / 360);
         let camZ = VP_DISTANCE * Math.cos(x.value * 2 * Math.PI / 360)
             * Math.cos(y.value * 2 * Math.PI / 360);
-        console.log(x.value, camX, camY, camZ)
         mView = lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]);
     })
     y.addEventListener('input', function () {
