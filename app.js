@@ -390,7 +390,6 @@ function setup(shaders) {
         //multTranslation(heli.position);
         //multRotationY(heli.velocity)
         //multRotationY(-heli.rotationAngle)
-        pushMatrix()
         multRotationY(-heli.rotationAngle)
         multTranslation(heli.position)
         multRotationY(-60)
@@ -415,7 +414,6 @@ function setup(shaders) {
         drawTailRotor(r);
         popMatrix();
         drawMainRotor(r);
-        popMatrix()
 
     }
 
