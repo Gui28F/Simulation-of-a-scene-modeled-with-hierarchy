@@ -204,7 +204,7 @@ function dropBox() {
 }
 
 function moveHelicopeterFront() {
-    if (!heli.onGround) {
+    if (!heli.onGround && heli.position[1] >= 17) {
         forward = true;
         if (heli.velocity + 0.02 <= 0.5)
             heli.velocity += 0.02;
@@ -904,23 +904,10 @@ function render() {
 }
 
 x.addEventListener('input', function () {
-    /*let camX = VP_DISTANCE * Math.sin(x.value * 2 * Math.PI / 360)
-        * Math.cos(y.value * 2 * Math.PI / 360);
-    let camY = VP_DISTANCE * Math.sin(y.value * 2 * Math.PI / 360);
-    let camZ = VP_DISTANCE * Math.cos(x.value * 2 * Math.PI / 360)
-        * Math.cos(y.value * 2 * Math.PI / 360);
-   // mView = lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]);*/
     mView = lookAt([0, 0, VP_DISTANCE], [0, 0, 0], [0, 1, 0]);
     mView = mult(mult(mView, rotateX(x.value)), rotateY(y.value));
 })
 y.addEventListener('input', function () {
-    /*let camX, camY, camZ;
-    camX = VP_DISTANCE * Math.sin(x.value * 2 * Math.PI / 360)
-        * Math.cos(y.value * 2 * Math.PI / 360);
-    camY = VP_DISTANCE * Math.sin(y.value * 2 * Math.PI / 360);
-    camZ = VP_DISTANCE * Math.cos(x.value * 2 * Math.PI / 360)
-        * Math.cos(y.value * 2 * Math.PI / 360);
-    //mView = lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]);*/
     mView = lookAt([0, 0, VP_DISTANCE], [0, 0, 0], [0, 1, 0]);
     mView = mult(mult(mView, rotateX(x.value)), rotateY(y.value));
 })
