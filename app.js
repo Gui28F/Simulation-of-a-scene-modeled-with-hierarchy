@@ -198,7 +198,7 @@ function dropBox() {
     newPos[1] -= 2;
     let box = {
         time: new Date().getTime(), pos: structuredClone(newPos),
-        velocity: [tV[0] * heli.velocity, -0.3, tV[1] * heli.velocity]
+        velocity: [tV[0] * 1.5 * heli.velocity, -0.3, tV[1] * 1.5 * heli.velocity]
     };
     boxes.push(box)
 }
