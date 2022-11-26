@@ -1,5 +1,5 @@
 import { buildProgramFromSources, loadShadersFromURLS, setupWebGL } from "./libs/utils.js";
-import { ortho, lookAt, flatten, vec3, vec4, mult, rotateY, perspective, inverse } from "./libs/MV.js";
+import { ortho, lookAt, flatten, vec3, vec4, mult, rotateY, perspective, inverse, rotateX } from "./libs/MV.js";
 import { modelView, loadMatrix, multRotationY, multScale, multRotationX, multRotationZ, pushMatrix, popMatrix, multTranslation } from "./libs/stack.js";
 import * as CYLINDER from './libs/objects/cylinder.js';
 import * as SPHERE from './libs/objects/sphere.js';
@@ -904,21 +904,25 @@ function render() {
 }
 
 x.addEventListener('input', function () {
-    let camX = VP_DISTANCE * Math.sin(x.value * 2 * Math.PI / 360)
+    /*let camX = VP_DISTANCE * Math.sin(x.value * 2 * Math.PI / 360)
         * Math.cos(y.value * 2 * Math.PI / 360);
     let camY = VP_DISTANCE * Math.sin(y.value * 2 * Math.PI / 360);
     let camZ = VP_DISTANCE * Math.cos(x.value * 2 * Math.PI / 360)
         * Math.cos(y.value * 2 * Math.PI / 360);
-    mView = lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]);
+   // mView = lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]);*/
+    mView = lookAt([0, 0, VP_DISTANCE], [0, 0, 0], [0, 1, 0]);
+    mView = mult(mult(mView, rotateX(y.value)), rotateY(x.value));
 })
 y.addEventListener('input', function () {
-    let camX, camY, camZ;
+    /*let camX, camY, camZ;
     camX = VP_DISTANCE * Math.sin(x.value * 2 * Math.PI / 360)
         * Math.cos(y.value * 2 * Math.PI / 360);
     camY = VP_DISTANCE * Math.sin(y.value * 2 * Math.PI / 360);
     camZ = VP_DISTANCE * Math.cos(x.value * 2 * Math.PI / 360)
         * Math.cos(y.value * 2 * Math.PI / 360);
-    mView = lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]);
+    //mView = lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]);*/
+    mView = lookAt([0, 0, VP_DISTANCE], [0, 0, 0], [0, 1, 0]);
+    mView = mult(mult(mView, rotateX(y.value)), rotateY(x.value));
 })
 
 
