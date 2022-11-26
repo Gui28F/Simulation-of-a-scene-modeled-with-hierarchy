@@ -911,7 +911,7 @@ x.addEventListener('input', function () {
         * Math.cos(y.value * 2 * Math.PI / 360);
    // mView = lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]);*/
     mView = lookAt([0, 0, VP_DISTANCE], [0, 0, 0], [0, 1, 0]);
-    mView = mult(mult(mView, rotateX(y.value)), rotateY(x.value));
+    mView = mult(mult(mView, rotateX(x.value)), rotateY(y.value));
 })
 y.addEventListener('input', function () {
     /*let camX, camY, camZ;
@@ -922,7 +922,7 @@ y.addEventListener('input', function () {
         * Math.cos(y.value * 2 * Math.PI / 360);
     //mView = lookAt([camX, camY, camZ], [0, 0, 0], [0, 1, 0]);*/
     mView = lookAt([0, 0, VP_DISTANCE], [0, 0, 0], [0, 1, 0]);
-    mView = mult(mult(mView, rotateX(y.value)), rotateY(x.value));
+    mView = mult(mult(mView, rotateX(x.value)), rotateY(y.value));
 })
 
 
